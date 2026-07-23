@@ -1,4 +1,24 @@
-import React, { useState, useMemo } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ascension Codex — Character Forge</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #0c0a12; min-height: 100vh; }
+  #root { min-height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+
+<script type="text/plain" id="app-source">
+const { useState, useMemo } = React;
+
 
 /* ============================================================
    DATA LAYER — transcribed from the ruleset
@@ -685,7 +705,7 @@ function RadarChart({ values, accent }) {
 
 const STEPS = ["Identity", "Class", "Attributes", "Gear", "Signatures", "Base Effects", "Combat Rules", "Sheet"];
 
-export default function CharacterCreator() {
+function CharacterCreator() {
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [title, setTitle] = useState("");
@@ -1790,3 +1810,19 @@ function Field({ label, children }) {
     </div>
   );
 }
+
+</script>
+
+<script>
+  (function () {
+    var source = document.getElementById('app-source').textContent;
+    var output = Babel.transform(source, {
+      presets: [['react', { runtime: 'classic' }]],
+    }).code;
+    var script = document.createElement('script');
+    script.text = output + '\nconst root = ReactDOM.createRoot(document.getElementById("root"));\nroot.render(React.createElement(CharacterCreator));';
+    document.body.appendChild(script);
+  })();
+</script>
+</body>
+</html>
