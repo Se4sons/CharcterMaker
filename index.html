@@ -1,814 +1,1828 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Character Forge</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ascension Codex — Character Forge</title>
 <style>
-  :root{
-    --bg:#0a0c16;
-    --panel:#11142a;
-    --panel2:#161a36;
-    --line:#262c52;
-    --cyan:#4be3ff;
-    --crimson:#ff3860;
-    --gold:#ffb020;
-    --text:#e8ecf7;
-    --muted:#8892b0;
-    --good:#3ee08a;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    background:
-      radial-gradient(1200px 600px at 10% -10%, #1a1f42 0%, transparent 60%),
-      radial-gradient(1000px 500px at 110% 10%, #2a1030 0%, transparent 55%),
-      var(--bg);
-    color:var(--text);
-    font-family:'Segoe UI', Arial, sans-serif;
-    min-height:100vh;
-  }
-  .app{display:grid; grid-template-columns:300px 1fr; min-height:100vh;}
-  @media (max-width:900px){ .app{grid-template-columns:1fr;} }
-
-  /* ---------- Sidebar / Roster ---------- */
-  .sidebar{
-    background:linear-gradient(180deg,#0d1024,#0a0c18);
-    border-right:1px solid var(--line);
-    padding:20px 16px;
-  }
-  .brand{
-    font-family:Georgia, serif;
-    font-weight:900;
-    font-size:22px;
-    letter-spacing:1px;
-    color:var(--text);
-    margin:0 0 2px 0;
-    display:flex; align-items:center; gap:10px;
-  }
-  .brand small{
-    display:block;
-    font-family:Arial, sans-serif;
-    font-size:10.5px;
-    letter-spacing:3px;
-    color:var(--muted);
-    text-transform:uppercase;
-    margin-top:2px;
-  }
-  .crest{
-    width:34px;height:34px;flex:none;
-    clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-    background:linear-gradient(135deg,var(--cyan),var(--crimson));
-    display:flex;align-items:center;justify-content:center;
-    font-weight:900;color:#03040a;font-size:15px;font-family:Arial;
-  }
-  .newBtn{
-    margin-top:16px;width:100%;
-    background:linear-gradient(90deg,var(--crimson),#ff6a3d);
-    border:none;color:#0a0c16;font-weight:800;
-    padding:11px 10px;letter-spacing:1px;text-transform:uppercase;font-size:12.5px;
-    cursor:pointer;
-    clip-path:polygon(0 0, 100% 0, 96% 100%, 0% 100%);
-  }
-  .newBtn:hover{filter:brightness(1.1);}
-  .roster{margin-top:18px; display:flex; flex-direction:column; gap:8px; max-height:calc(100vh - 180px); overflow:auto; padding-right:4px;}
-  .rosterEmpty{color:var(--muted); font-size:12.5px; margin-top:10px; line-height:1.5;}
-  .ticket{
-    background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--cyan);
-    padding:9px 10px; cursor:pointer; position:relative;
-  }
-  .ticket.active{border-left-color:var(--crimson); background:var(--panel2);}
-  .ticket .name{font-weight:700; font-size:13.5px;}
-  .ticket .meta{font-size:10.5px; color:var(--muted); margin-top:2px; letter-spacing:.5px;}
-  .ticket .del{
-    position:absolute; right:8px; top:8px; background:none; border:none; color:var(--muted);
-    cursor:pointer; font-size:13px;
-  }
-  .ticket .del:hover{color:var(--crimson);}
-
-  /* ---------- Main ---------- */
-  .main{padding:26px 30px 80px; max-width:980px;}
-  .pageTitle{font-family:Georgia, serif; font-size:26px; font-weight:800; margin:0 0 2px;}
-  .pageSub{color:var(--muted); font-size:12.5px; margin:0 0 22px; letter-spacing:.3px;}
-
-  .row{display:flex; gap:16px; flex-wrap:wrap;}
-  .field{display:flex; flex-direction:column; gap:6px; margin-bottom:16px;}
-  .field label{font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); font-weight:700;}
-  input[type=text], select{
-    background:var(--panel); border:1px solid var(--line); color:var(--text);
-    padding:9px 10px; font-size:14px; min-width:220px;
-  }
-  input[type=text]:focus, select:focus{outline:1px solid var(--cyan);}
-
-  .rankPicker{display:flex; gap:8px;}
-  .rankBtn{
-    width:42px;height:42px; border:1px solid var(--line); background:var(--panel);
-    color:var(--muted); font-weight:800; cursor:pointer; font-size:15px;
-    clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  }
-  .rankBtn.sel{background:linear-gradient(135deg,var(--cyan),var(--crimson)); color:#04050c; border-color:transparent;}
-
-  .statBar{
-    display:flex; gap:14px; flex-wrap:wrap; margin:6px 0 22px;
-    background:var(--panel); border:1px solid var(--line); padding:12px 16px;
-  }
-  .statBar .stat{font-size:12px; color:var(--muted);}
-  .statBar .stat b{display:block; color:var(--text); font-size:16px;}
-
-  .attrGrid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:8px;}
-  @media (max-width:700px){.attrGrid{grid-template-columns:repeat(2,1fr);}}
-  .attrBox{background:var(--panel); border:1px solid var(--line); padding:10px 12px;}
-  .attrBox .lbl{font-size:11px; letter-spacing:1px; color:var(--muted); text-transform:uppercase; font-weight:700;}
-  .attrCtrl{display:flex; align-items:center; gap:10px; margin-top:6px;}
-  .attrCtrl button{
-    width:26px;height:26px; border:1px solid var(--line); background:var(--panel2); color:var(--text);
-    cursor:pointer; font-weight:800;
-  }
-  .attrCtrl .val{font-size:20px; font-weight:800; width:22px; text-align:center;}
-  .attrWarn{font-size:10.5px; color:var(--gold); margin-top:6px;}
-
-  .sectionTitle{
-    display:flex; align-items:center; gap:10px; margin:30px 0 12px;
-    font-size:15px; font-weight:800; letter-spacing:.5px; text-transform:uppercase;
-  }
-  .sectionTitle .bar{flex:1; height:1px; background:linear-gradient(90deg,var(--line),transparent);}
-  .slotCount{font-size:11px; padding:3px 9px; border:1px solid var(--line); color:var(--muted); letter-spacing:.5px;}
-  .slotCount.full{color:var(--crimson); border-color:var(--crimson);}
-  .catNote{font-size:11.5px; color:var(--muted); margin:-6px 0 12px; line-height:1.5;}
-
-  .effGrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px;}
-  .effCard{
-    background:var(--panel); border:1px solid var(--line); padding:10px 12px; cursor:pointer;
-    transition:border-color .15s;
-  }
-  .effCard:hover{border-color:var(--cyan);}
-  .effCard.sel{border-color:var(--crimson); background:var(--panel2);}
-  .effCard.disabled{opacity:.35; cursor:not-allowed;}
-  .effCard .top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
-  .effCard .nm{font-weight:700; font-size:13px;}
-  .tag{font-size:9.5px; padding:2px 6px; border:1px solid var(--line); color:var(--muted); letter-spacing:.5px; white-space:nowrap;}
-  .tag.CON{color:var(--cyan); border-color:var(--cyan);}
-  .tag.QP{color:var(--gold); border-color:var(--gold);}
-  .tag.PAS{color:var(--good); border-color:var(--good);}
-  .effCard .txt{font-size:11.5px; color:var(--muted); margin-top:6px; line-height:1.5; display:none;}
-  .effCard.expanded .txt{display:block;}
-  .effCard .checkline{font-size:10.5px; color:var(--muted); margin-top:6px;}
-  .effCard.sel .checkline{color:var(--crimson); font-weight:700;}
-  .locked{font-size:12px; color:var(--muted); font-style:italic; padding:14px 0;}
-
-  .saveBar{
-    position:sticky; bottom:0; margin-top:30px; padding:16px 0; display:flex; gap:12px; align-items:center;
-    background:linear-gradient(0deg, var(--bg) 60%, transparent);
-  }
-  .saveBtn{
-    background:linear-gradient(90deg,var(--cyan),#7dfff0); border:none; color:#04050c; font-weight:800;
-    padding:12px 26px; letter-spacing:1px; text-transform:uppercase; font-size:13px; cursor:pointer;
-    clip-path:polygon(0 0, 100% 0, 96% 100%, 0% 100%);
-  }
-  .saveBtn:hover{filter:brightness(1.08);}
-  .saveMsg{font-size:12.5px; color:var(--good);}
-  .totalPill{font-size:11px; color:var(--muted);}
-
-  ::-webkit-scrollbar{width:8px;}
-  ::-webkit-scrollbar-thumb{background:var(--line);}
+  html, body { margin: 0; padding: 0; background: #0c0a12; min-height: 100vh; }
+  #root { min-height: 100vh; }
 </style>
 </head>
 <body>
-<div class="app">
-  <div class="sidebar">
-    <div class="brand"><div class="crest" id="crestMini">?</div><div>CHARACTER FORGE<small>Combat Roster</small></div></div>
-    <button class="newBtn" onclick="newCharacter()">+ New Fighter</button>
-    <div id="roster" class="roster"></div>
-  </div>
+<div id="root"></div>
 
-  <div class="main">
-    <h1 class="pageTitle" id="editingLabel">New Fighter</h1>
-    <p class="pageSub">Build a character sheet for the custom combat ruleset — attributes, signatures, counters, and base effects. This roster is saved so it's ready when the battle engine is added.</p>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
 
-    <div class="row">
-      <div class="field">
-        <label>Fighter Name</label>
-        <input type="text" id="fName" placeholder="e.g. Julian Knox">
-      </div>
-      <div class="field">
-        <label>Universe</label>
-        <select id="fUniverse"></select>
-      </div>
-    </div>
+<script type="text/plain" id="app-source">
+const { useState, useMemo } = React;
 
-    <div class="field">
-      <label>Rank</label>
-      <div class="rankPicker" id="rankPicker"></div>
-    </div>
 
-    <div class="statBar" id="statBar"></div>
+/* ============================================================
+   DATA LAYER — transcribed from the ruleset
+   ============================================================ */
 
-    <div class="sectionTitle">Attributes<div class="bar"></div></div>
-    <div class="attrGrid" id="attrGrid"></div>
-    <div class="attrWarn" id="attrWarn"></div>
-
-    <div id="categoriesRoot"></div>
-
-    <div class="saveBar">
-      <button class="saveBtn" onclick="saveCharacter()">Save Fighter</button>
-      <span class="saveMsg" id="saveMsg"></span>
-      <span class="totalPill" id="totalPill"></span>
-    </div>
-  </div>
-</div>
-
-<script>
-/* ============================= DATA ============================= */
-
-const UNIVERSES = [
-  "Universe 1 — DBZ/DBS","Universe 1 — One Piece","Universe 1 — Naruto","Universe 1 — Bleach","Universe 1 — HXH",
-  "Universe 2 — DC Universe","Universe 2 — Justice League","Universe 2 — Lantern Corps","Universe 2 — Teen Titans","Universe 2 — The Legion",
-  "Universe 3 — Marvel","Universe 3 — The Avengers","Universe 3 — Fantastic 4","Universe 3 — X-Men","Universe 3 — The Illuminati",
-  "Universe 4 — Universal Colosseum","Universe 4 — Avatar","Universe 4 — Transformers","Universe 4 — Star Wars","Universe 4 — Ben 10",
-  "Universe 5 — Seven Deadly Sins","Universe 5 — Magi","Universe 5 — Fairy Tail","Universe 5 — Black Clover","Universe 5 — Inuyasha",
-  "Universe 6 — One Punch Man","Universe 6 — My Hero Academia","Universe 6 — Kill la Kill","Universe 6 — Code Geass",
-  "Universe 7 — Fateverse","Universe 7 — Attack on Titan","Universe 7 — Full Metal Alchemist","Universe 7 — Tokyo Ghoul","Universe 7 — Jojo",
-  "Original / Homebrew"
-];
-
-const RANK_INFO = {
-  1:{baseStock:6,  maxStocks:20, effSlotMax:2, abilities:1, signatures:1},
-  2:{baseStock:8,  maxStocks:30, effSlotMax:2, abilities:3, signatures:1},
-  3:{baseStock:10, maxStocks:40, effSlotMax:2, abilities:5, signatures:1},
-  4:{baseStock:11, maxStocks:50, effSlotMax:3, abilities:7, signatures:1},
-  5:{baseStock:12, maxStocks:60, effSlotMax:3, abilities:8, signatures:2},
+const CLASSES = {
+  trueBorn: {
+    label: "True Born",
+    accent: { a: "#f2c14e", b: "#8b5cf6" },
+    blurb: "Effects only apply while Transformed. Access to 6 Base Effects total.",
+    baseEffectCap: 6,
+    subclasses: {
+      enhanced: {
+        label: "Enhanced",
+        desc: "No D6 Damage Roll from Overload (still suffers the Overload penalty, but loses form for 1 Round/Next Round instead). Cannot be Countered while Transformed. Counters inflict +1 Stock Damage.",
+      },
+      metamorph: {
+        label: "Metamorph",
+        desc: "Choose 1 piece of Gear (Weaponry or Equipment). That Gear grants an additional +1/-1 Attribute, and you can rearm on a 4+ after being disarmed. Only a single piece of Gear may take this.",
+      },
+      transcendent: {
+        label: "Transcendent",
+        desc: "+2 Stocks and +3 Rounds to your Transformation. At the start of every Round on a 4+, ignore all of the opponent's Attribute-Altering Base Effects for the Round (roll can't be re-rolled/flipped by opponents). Negates/Counters the Evolutionary subclass.",
+      },
+      chosen: {
+        label: "Chosen",
+        desc: "+2 to Damage, Accuracy, Block, or Dodge Rolls while Transformed (choose only one).",
+      },
+      demonic: {
+        label: "Demonic",
+        desc: "Criticals you suffer can be Healed and/or reduce the opponent's Stock Damage. Gain 5 Stocks to Base Stock while Transformed.",
+      },
+    },
+    rankChart: [
+      { rank: 1, req: "Start", text: "Common Transformation: +6 Stocks, +2 Attribute, 6 Rounds" },
+      { rank: 2, req: "7th Victory", text: "+4 Base Stock, +1 Base Attribute" },
+      { rank: 2, req: "14th Victory", text: "Rare Transformation: +8 Stocks, +2/-1 Attribute, 9 Rounds" },
+      { rank: 3, req: "21st Victory", text: "(see Variant chart — True Born gains no extra at 21st)" },
+      { rank: 3, req: "28th Victory", text: "+4 Base Stock, +1 Base Attribute. Legendary Transformation: +10 Stocks, +3 (or +2/-1, and/or +1/-2) Attributes, 12 Rounds" },
+      { rank: 4, req: "49th Victory", text: "+1 Base Attribute" },
+    ],
+  },
+  variant: {
+    label: "Variant",
+    accent: { a: "#22d3ee", b: "#14b8a6" },
+    blurb: "Only half of total Base Effects may be Passive at a time. Passive Base Effects cannot Minus/Subtract Attributes.",
+    baseEffectCap: 4,
+    subclasses: {
+      enlightened: {
+        label: "Enlightened",
+        desc: "Can use 2 Counters and/or 2 Negate/Cancel-Out Base Effects (max 2).",
+      },
+      evolutionary: {
+        label: "Evolutionary",
+        desc: "Gains 2 additional Base Effects that Minus/Subtract Attributes from opponents — the first at Rank 1, the second at Rank 3. One of the two may be Passive. Max 10 total Abilities/Base Effects.",
+      },
+      forsaken: {
+        label: "Forsaken",
+        desc: "Gains an additional Base Effect (not Passive) that the opponent cannot Negate/Nullify/Cancel with any other Base Effect, Ability, or Signature.",
+      },
+      ruler: {
+        label: "Ruler",
+        desc: "Ignore all effects against 1 chosen Attribute permanently. At the start of every Round on a 4+, Nullify all effects against Damage, Accuracy, Dodge, or Block for the Round (choose one Attribute/Roll type up front, cannot change).",
+      },
+      exalted: {
+        label: "Exalted",
+        desc: "Goes all-out for 6 Rounds: +8 Stocks and 2 additional Base Effects once activated (no -1 Attribute or Stock-type Base Effects; max 10 total Base Effects). Cannot take The Indomitable Signature. Effects are disabled at the end of Round 6.",
+      },
+    },
+    rankChart: [
+      { rank: 1, req: "Start", text: "4 Base Effects" },
+      { rank: 2, req: "14th Victory", text: "5th Ability/Base Effect" },
+      { rank: 3, req: "21st Victory", text: "6th Ability/Base Effect" },
+      { rank: 3, req: "28th Victory", text: "7th Ability/Base Effect" },
+      { rank: 4, req: "42nd Victory", text: "8th Ability/Base Effect" },
+    ],
+  },
+  specialist: {
+    label: "Specialist",
+    accent: { a: "#ef4444", b: "#94a3b8" },
+    blurb: "Can wield 2 of the same Gear type (Weaponry and/or Equipment) at once, max 2 Gear at a time, max 4 pieces total. 5 Base Effects. 7 failed rolls with a piece of Gear in one Round breaks it for the rest of the fight. Can rearm on a 4+ (no attack the turn you rearm).",
+    baseEffectCap: 5,
+    subclasses: {
+      enchanted: {
+        label: "Enchanted",
+        desc: "One chosen piece of Weaponry/Equipment cannot be Broken. Can rearm, and Disarm the opponent on a 3+ after being disarmed.",
+      },
+      highTech: {
+        label: "High Tech",
+        desc: "On a 4+, once a Round, Negate/Cancel one of the opponent's Weaponry or Equipment (choose Weaponry or Equipment per round, not both).",
+      },
+      divine: {
+        label: "Divine",
+        desc: "One chosen Weapon's attacks can't have Stock Damage Reduced, and the opponent cannot Heal Stocks lost from it. Effect ends if disarmed/broken. Negates/Counters the Demonic subclass.",
+      },
+      mithril: {
+        label: "Mithril",
+        desc: "Immune to Bleed and Crit while one chosen piece of Equipment is active/in use; +8 Stocks to Base Stock. Cannot take The Indomitable Signature. Effect ends if disarmed/broken.",
+      },
+      cursed: {
+        label: "Cursed",
+        desc: "Max Gear Rarity you can hold increases by 1, and you start with Rare Gear.",
+      },
+    },
+    rankChart: [
+      { rank: 1, req: "Start", text: "Common Gear, 6 Rounds, Max 4 Fails" },
+      { rank: 2, req: "14th Victory", text: "Rare Gear, 10 Rounds, Max 5 Fails" },
+      { rank: 3, req: "28th Victory", text: "Legendary/Living Relic Gear (only a Specialist can Disarm it), Max 6 Fails" },
+      { rank: 4, req: "49th Victory", text: "Can use 3 pieces of Weaponry/Equipment at a time" },
+    ],
+  },
 };
 
-// Category definitions. `max` is a fixed cap, or a function(rank) for rank-scaling caps.
+// Signatures — tag drives simple conflict validation
+const SIGNATURES = [
+  { name: "The Re-rolling Effect", tag: "reroll", desc: "Re-roll 1 of your own Rolls once a Turn. (CON)" },
+  { name: "Reversal Effect", tag: "reroll", desc: "Re-roll 1 of your opponent's Rolls once a Turn. (CON)" },
+  { name: "The Esper Effect", tag: "cancel", desc: "Cancel/Negate 1 Signature Effect for the Round, once a turn, on a 4+ (can't be re-rolled by opponent). (CON)" },
+  { name: "The Flip Effect", tag: "flip", desc: "Flip 1 of your own Rolls once a Turn." },
+  { name: "Trump Card Effect", tag: "flip", desc: "Flip 1 of your opponent's Rolls once a Turn." },
+  { name: "Monster Effect", tag: "other", desc: "All 5+ Damage Rolls deal 1 Extra Stock Damage. Nullified if opponent's Toughness is 1+ level above your Strength." },
+  { name: "Metal Knight Effect", tag: "other", desc: "Opponent's 5+ Damage Rolls deal 1 Less Stock Damage. Nullified if opponent's Strength is 1+ level above your Toughness." },
+  { name: "The Adamantium Skull Effect", tag: "other", desc: "Immune to Bleed and Ultra Damage. On a 4+, opponent attacks only affect you on a 5+ Damage Roll this Turn, and suffer +1 Stock Damage on failed Defensive Rolls." },
+  { name: "Deadshot Effect", tag: "other", desc: "Gain 2 additional Attacks that hit on a NAT 4+ every Turn (ignores all buffs/nerfs to these rolls). Nullified if opponent's Speed is 1+ level above your Initiative." },
+  { name: "The Speed of Light Effect", tag: "other", desc: "Opponent's first Attack must hit on a NAT 4+; if they fail, their next Attack misses automatically. Nullified if opponent's Initiative is 1+ level above your Speed." },
+  { name: "The Indomitable Effect", tag: "other", desc: "+6 Stocks to Base Stock, can Reduce Criticals, and requires 6 failed Defensive rolls to suffer Bleed." },
+  { name: "The Zenkai Effect", tag: "other", desc: "Regenerate 2 Stocks a round unless you suffer a Critical that round (applies to Base Stock only)." },
+  { name: "Demonic Fury Effect", tag: "other", desc: "On a 4+ once a Turn, seize Initiative and/or go Berserk: go first and gain 4 additional Attacks this Round that can't be Countered, +1 Damage and/or +1 Accuracy. Cannot be re-rolled/flipped by opponent." },
+  { name: "The Concussion Effect", tag: "other", desc: "While the opponent Bleeds, your Attacks deal +1 Stock Damage, and on a 4+ they suffer -1/-2/-3 Accuracy on a D3." },
+  { name: "All Guard Effect", tag: "other", desc: "Pass a Defensive Roll you just failed on a 4+ (auto-success & un-reroll/flip-proof on a 6). Max 1 Defensive Roll a Turn. Doesn't work on Counters/Healing/the Wreck or Ark of Time Effect. (QP)" },
+  { name: "Last Stand Effect", tag: "other", desc: "When inflicted with Bleed, Ultra Damage, or a Critical, on a 4+ choose: 2 Unblockable Attacks, or 2 Undodgeable Attacks (still roll to hit/damage)." },
+  { name: "Solomon's Wisdom Effect", tag: "other", desc: "Gain 1 additional Attack for every Accuracy Roll the opponent misses (max 6). Successful Blocks don't count as a miss; Dodges do." },
+  { name: "The Stardrop Effect", tag: "cancel", desc: "Cancel/Negate 1 Passive Base Effect in the match, once a turn, for the Round, on a 4+ (can't be flipped by opponent)." },
+  { name: "Cyborg Initiative Effect", tag: "other", desc: "For every 3 Defensive Rolls the opponent fails, on a 4+ inflict Ultra Damage on a D10. Nullified if opponent's Toughness is 1+ level above your Strength." },
+  { name: "Susano Effect", tag: "other", desc: "On a 4+ once a turn, copy one of the opponent's Passive, Continuous, and/or Quick-Play Base Effects for the Round (can't be re-rolled by opponent)." },
+  { name: "Mental Warp Effect", tag: "other", desc: "On a 4+ for the Round, opponent's Continuous or Quick-Play Effect (choose one) must be activated on a NAT 6+; on a 1 they suffer 1.5 Stock Damage (can't be reduced). Neither roll can be re-rolled by opponent." },
+  { name: "Kyoka Suigetsu Effect", tag: "other", desc: "Opponent's Defensive Rolls escalate: 1st must pass on NAT 4+, 2nd on NAT 5+, 3rd on NAT 6+ — a 6+ Defensive Roll cancels the effect for the Round." },
+  { name: "The Witch Warp Effect", tag: "other", desc: "On the opponent's turn, on a 4+ recover a lost Stock Base Effect with 6 Stocks (lost again at Round's end unless you roll a 6, then it returns permanently with 5 Stocks)." },
+  { name: "The Gear Head Effect", tag: "other", desc: "On your turn, on a 4+ recover a lost Stock Base Effect with 6 Stocks (lost again at Round's end unless you roll a 6, then it returns permanently with 5 Stocks)." },
+  { name: "The Life Drain Effect", tag: "other", desc: "On a 4+, steal 1 Stock per 4+ Damage Roll that Round (2 automatically on a 6+). Max 6 Stocks. Nullified if opponent's Toughness is 1+ level above your Strength." },
+];
+
+// Base Effect categories
 const CATEGORIES = [
   {
-    key:'finishers', label:'Finisher', max:1, minRank:3,
-    note:'Only one Finisher may be used, and it can be used at most twice. Finishers can\'t be buffed, nerfed, or have their damage altered, and ignore your opponent\'s re-roll/flip effects. Max 12 Stock Damage per character.',
-    items:[
-      {id:'fin_ko', name:'The K.O. Effect', tag:'—', text:"Unleash a barrage — roll 2D6 for the number of attacks (max 12), uncounterable, must be blocked/dodged on a 4+. Re-roll on a 1, but succeeding the first roll clean lets you use this Finisher again."},
-      {id:'fin_environmental', name:'Environmental Effect', tag:'—', text:"Every character in the setting except the user must pass a defensive roll once per turn for 4 turns or suffer Finisher damage; anyone who joins mid-effect suffers it too. 12+ stock damage within 2 rounds also inflicts Bleed."},
-      {id:'fin_forfreedom', name:'For Freedom Effect', tag:'—', text:"At 9 stock or less, self-destruct for 3D6 damage (max 12) unless the opponent passes 2 defensive rolls (half damage if blocked/dodged). On a NAT 4+ you revive with half stocks; on a NAT 6 you can use the Finisher a second time without the re-roll."},
-      {id:'fin_whowontfall', name:"He Who Won't Fall Effect", tag:'—', text:"At 9 stock or less, transform: inflict Finisher damage with every attack, double your stocks, gain 3 extra attacks a turn, and deal +1.5 stock damage on any exchange of damage for 2 rounds before fainting/surrendering."},
-      {id:'fin_unblockable', name:'Unblockable Effect', tag:'—', text:"All your attacks are unblockable and must be dodged on a 4+ twice; opponent revives must pass on a 6 regardless of their effects. Uncounterable. Max 12 stock damage."},
-      {id:'fin_undodgeable', name:'Undodgeable Effect', tag:'—', text:"All your attacks are undodgeable and must be blocked on a 4+ twice; opponent revives must pass on a 6 regardless of their effects. Uncounterable. Max 12 stock damage."},
-      {id:'fin_genjutsu', name:'Genjutsu Effect', tag:'—', text:"For 3 rounds, all stock damage exchanged between you and your opponent is accumulated, doubled, and dealt to the opponent while you heal the same amount — but if the opponent ever out-damages you 2-for-1 in that window, the effect breaks."},
-      {id:'fin_ascension', name:'The Ascension Effect', tag:'—', text:"Every attack deals a flat 3 stock damage and reduces the opponent's Toughness by 1, for 3 rounds (max 12 stock damage)."},
-      {id:'fin_iceage', name:'The Ice Age Effect', tag:'—', text:"You can't miss, and gain your maximum attacks, for 3 rounds (max 18 attacks per round)."},
-      {id:'fin_lastbreath', name:'The Last Breath Effect', tag:'—', text:"Dodge everything on a 2+ and reduce the opponent's Initiative by 1, for 3 rounds."},
-      {id:'fin_crystalpalace', name:'The Crystal Palace Effect', tag:'—', text:"Block everything on a 2+ and reduce the opponent's Strength by 1, for 3 rounds."},
-    ]
+    key: "counter",
+    label: "Counter Effects",
+    tagline: "Quick-Play. Max 1 ability. Counters can only be buffed/nerfed by Attributes. Usable with D8/D10/D12 Gear. Choose 3 counters covering Physical & Projectile, or 6 counters covering only one type. 3 failed Counters = can't Counter next Round.",
+    cap: 1, capRank4: 1,
+    effects: [
+      { name: "Reflect Counter", desc: "Counter on a 4+; on a 4+ Damage Roll the opponent suffers the effects of their own countered Attack/Base Effect for 1 Round/Next Round. Roll a 1 and you take 1 Stock Damage (Critical)." },
+      { name: "The Formless Counter", desc: "Counter on a 4+; each 4+ Damage Roll lets you Attack during the opponent's turn (2 Attacks on a NAT 6). Roll a 1 and take 1 Stock Damage (Critical). Max 4/6 Attacks depending on scope. Nullified if opponent's Speed is 1+ above your Initiative." },
+      { name: "Water Flowing Rock Smashing Fist Counter", desc: "Counter on a 4+; apply both your Strength and the attacker's Strength against their Toughness for the Damage Roll (counts as NAT). Nullified unless countering with a NAT 6, if opponent's Strength is 1+ above your Toughness. Roll a 1 and take 1 Stock Damage (Critical)." },
+      { name: "Whirlwind Iron Slashing Fist Counter", desc: "Counter on a 4+; after 2 successful 4+ Damage Rolls, inflict Bleed (NAT 6+ makes it un-stoppable for 3 Rounds)." },
+      { name: "Void Sky Dragon Fist Counter", desc: "Counter on a 4+; each successful 4+ Counter Damage Roll gives -1 to the opponent's Dodge or Block next round (choose before rolling). Max 3. Nullified if opponent's Initiative is 1+ above your Speed." },
+      { name: "Full Counter", desc: "Counter on a 4+; on a 4+ Damage Roll cancel 1 of the opponent's Attacks this Turn (3 on a Counter of 6). Max 3/6 depending on scope. Nullified if opponent's Toughness is 1+ above your Strength." },
+    ],
   },
   {
-    key:'signatures', label:'Signature', max:(r)=>RANK_INFO[r].signatures,
-    note:'No more than one Passive Signature. Re-roll effects can\'t be combined with Flip effects.',
-    items:[
-      {id:'sig_rerolling', name:'The Re-rolling Effect', tag:'—', text:"Re-roll one of your own rolls once a turn.", excludes:['sig_reversal']},
-      {id:'sig_reversal', name:'Reversal Effect', tag:'—', text:"Re-roll one of your opponent's rolls once a turn.", excludes:['sig_rerolling']},
-      {id:'sig_esper', name:'The Esper Effect', tag:'—', text:"Cancel/negate one Signature per match, once per turn, on a 4+.", excludes:['sig_stardrop']},
-      {id:'sig_flip', name:'The Flip Effect', tag:'—', text:"Flip one of your own rolls once a turn.", excludes:['sig_trumpcard']},
-      {id:'sig_trumpcard', name:'Trump Card Effect', tag:'—', text:"Flip one of your opponent's rolls once a turn.", excludes:['sig_flip']},
-      {id:'sig_monster', name:'Monster Effect', tag:'—', text:"Your 5-damage rolls deal +1 stock damage (nullified if opponent Toughness ≥ your Strength +1).", excludes:['sig_cyborginitiative','sig_metalknight','sig_adamantiumskull','sig_demonicfury']},
-      {id:'sig_metalknight', name:'Metal Knight Effect', tag:'—', text:"Opponent's 6-damage rolls deal 1 less stock damage (nullified if opponent Strength ≥ your Toughness +1).", excludes:['sig_adamantiumskull']},
-      {id:'sig_adamantiumskull', name:'The Adamantium Skull Effect', tag:'—', text:"Unaffected by Critical Hits and the Bleed Effect (nullified if opponent Strength ≥ your Toughness +1).", excludes:['sig_metalknight','sig_zenkai']},
-      {id:'sig_deadshot', name:'Deadshot Effect', tag:'—', text:"Gain 2 additional attacks that hit on a NAT 4+ every turn, ignoring buffs/nerfs (nullified if opponent Speed ≥ your Initiative +1).", excludes:['sig_speedoflight']},
-      {id:'sig_speedoflight', name:'The Speed of Light Effect', tag:'—', text:"Opponent's first attack must hit on a NAT 4+ or their next attack misses automatically (nullified if opponent Initiative ≥ your Speed +1).", excludes:['sig_deadshot','sig_mentalwarp']},
-      {id:'sig_indomitable', name:'The Indomitable Effect', tag:'—', text:"Your Base Stock gains an additional 8 stocks.", excludes:['sig_zenkai','sig_witchwarp','sig_gearhead','sig_allguard']},
-      {id:'sig_zenkai', name:'The Zenkai Effect', tag:'—', text:"Regenerate 1.5 stocks a round to your Base Stock, unless you suffer a Critical that round (nullified if opponent Strength ≥ your Toughness +1).", excludes:['sig_indomitable','sig_adamantiumskull','sig_metalknight']},
-      {id:'sig_demonicfury', name:'Demonic Fury Effect', tag:'—', text:"Seize the Initiative on a 4+ once a turn, going first the following round if successful.", excludes:['sig_monster']},
-      {id:'sig_concussion', name:'The Concussion Effect', tag:'—', text:"After inflicting Bleed, your attacks deal +0.5 stock damage while it lasts (NAT 6 damage roll deals +1 instead). Max 3 stock damage.", excludes:['sig_monster','sig_laststand']},
-      {id:'sig_allguard', name:'All Guard Effect', tag:'—', text:"Pass a defensive roll you just failed on a 4+ (unrerollable by the opponent on a 6). Max once a turn; doesn't work on Counters/Healing.", excludes:['sig_indomitable','sig_rerolling','sig_flip','sig_almighty']},
-      {id:'sig_laststand', name:'Last Stand Effect', tag:'—', text:"For every Critical you suffer, the attacker also suffers 0.5 stock damage (1 on a 4+), treated as Critical damage.", excludes:['sig_adamantiumskull','sig_metalknight','sig_concussion']},
-      {id:'sig_solomonswisdom', name:"Solomon's Wisdom Effect", tag:'—', text:"For every 2 accuracy rolls you miss, gain 1 additional attack (max 3); still must roll to hit.", excludes:['sig_deadshot','sig_concussion']},
-      {id:'sig_almighty', name:'The Almighty Effect', tag:'—', text:"Can't be doubled out in any attribute — doubled-out rolls must instead be passed on a 6.", excludes:['sig_adamantiumskull','sig_metalknight','sig_allguard']},
-      {id:'sig_stardrop', name:'The Stardrop Effect', tag:'—', text:"Cancel/negate one Passive base effect per match, once per turn, on a 4+.", excludes:['sig_esper']},
-      {id:'sig_susano', name:'Susano Effect', tag:'—', text:"Activate a chosen 1-2-3 or 4-5-6 Quick-Play base effect twice a round.", excludes:['sig_adamantiumskull','sig_metalknight']},
-      {id:'sig_mentalwarp', name:'Mental Warp Effect', tag:'—', text:"Opponent's first Continuous effect each round must activate on a NAT 5+, or on a 1 they immediately suffer 1 stock damage (nullified if opponent Initiative ≥ your Speed +1).", excludes:['sig_speedoflight']},
-      {id:'sig_kyokasuigetsu', name:'Kyoka Suigetsu Effect', tag:'—', text:"Opponent's first defensive roll must pass on a NAT 4+; if it fails, their next must pass on a NAT 5+ (max 2 rolls a turn; nullified if opponent Speed ≥ your Initiative +1).", excludes:['sig_deadshot','sig_monster','sig_cyborginitiative','sig_concussion']},
-      {id:'sig_witchwarp', name:'The Witch Warp Effect', tag:'—', text:"Increase one of your Stock Base Effects by 6 stocks (nullified if opponent Strength ≥ your Toughness +1).", excludes:['sig_indomitable','sig_gearhead']},
-      {id:'sig_gearhead', name:'The Gear Head Effect', tag:'—', text:"Recover a lost Stock Base Effect on a 4+, regaining 4 stocks (max twice, never the same effect twice).", excludes:['sig_indomitable','sig_rerolling','sig_flip','sig_witchwarp']},
-    ]
+    key: "toughness",
+    label: "Toughness Base Effects",
+    tagline: "Max 2 abilities (3 at Rank 4). Gear-triggered versions activate on 4-6.",
+    cap: 2, capRank4: 3,
+    effects: [
+      { name: "Sinbad Effect", desc: "-1 Toughness to opponent for 1 round if they roll 1-3 Damage, on a 4+; extends a round per unsuccessful roll (max 3). (QP)" },
+      { name: "Max Out Effect", desc: "-1 Toughness to opponent for 1 round if they roll 4-6 Damage, on a 4+; on a 6 you take no damage and it still activates. (QP)" },
+      { name: "Chidori Effect", desc: "-1 Toughness to opponent for 1/next round on a 4+ Damage Roll (3 rounds on a NAT 6). (CON)" },
+      { name: "Digivolution Effect", desc: "+1 Toughness to you for 1/next round on a 4+ Damage Roll (3 rounds on a NAT 6). (CON)" },
+      { name: "Vasto Lorde/Saint's Soul Effect", desc: "+10 Stocks, and -1 Toughness to the opponent. (CON)", excludes: [] },
+      { name: "Chosen One/Defying Fate Effect", desc: "+10 Stocks, and +1 Toughness. (CON)" },
+      { name: "Destroyer/Man of Steel Effect", desc: "+1 Toughness to you, or -1 Toughness to the opponent (choose). Cannot be taken with Vasto Lorde/Saint's Soul. (PAS)", excludes: ["Vasto Lorde/Saint's Soul Effect"] },
+      { name: "Mega Man Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "All for One Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "One for All Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "Rogue Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "The Hybrid Effect", desc: "Reserved — description pending.", stub: true },
+    ],
   },
   {
-    key:'counters', label:'Counter Effect', max:1,
-    note:'Quick-Play. Only one Counter Base Effect. Counter damage can\'t be buffed/nerfed except by attributes.',
-    items:[
-      {id:'ctr_deflect', name:'Deflect Counter', tag:'QP', text:"Counter on a 4+; on a NAT 6 also negate one opponent Signature next turn. Rolling a 1 costs you 1 stock damage."},
-      {id:'ctr_reflect', name:'Reflect Counter', tag:'QP', text:"Counter on a 4+; on a 6, the opponent suffers the effects of their own countered attack/effect for a round. Rolling a 1 costs you 1 stock damage."},
-      {id:'ctr_full', name:'Full Counter', tag:'QP', text:"Counter on a 4+ with all counter damage rolls at +1 stock. Rolling a 1 costs you 1 stock damage."},
-      {id:'ctr_smash', name:'Smash Counter', tag:'QP', text:"Destroy incoming attacks on a 4+, at +2 to the damage roll. Rolling a 1 costs you 1 stock damage."},
-      {id:'ctr_formless', name:'The Formless Counter', tag:'QP', text:"Counter on a 4+ to gain 1 additional attack; on a NAT 6, gain 2 additional attacks next turn (max 3)."},
-      {id:'ctr_absorptionhaki', name:'Absorption/Haki Counter', tag:'QP', text:"Counter on a 4+; on a NAT 6 also negate one opponent Passive effect next turn. Rolling a 1 costs you 1 stock damage."},
-      {id:'ctr_waterflowingrock', name:'Water Flowing Rock Smashing Fist Counter', tag:'QP', text:"Counter on a 4+; on a NAT 6 the opponent can't block their next 2 attacks next turn."},
-      {id:'ctr_whirlwindiron', name:'Whirlwind Iron Slashing Fist Counter', tag:'QP', text:"Counter on a 4+; on a NAT 6 the opponent can't dodge their next 2 attacks next turn."},
-      {id:'ctr_voidskydragon', name:'Void Sky Dragon Fist Counter', tag:'QP', text:"Counter on a 4+; on a NAT 6 the opponent misses their next 2 attacks next turn. Rolling a 1 costs you 1 stock damage."},
-    ]
+    key: "block",
+    label: "Block Base Effects",
+    tagline: "Max 2 abilities (3 at Rank 4). Gear-triggered versions activate on 4-6.",
+    cap: 2, capRank4: 3,
+    effects: [
+      { name: "Defensive Penetration Effect", desc: "Opponent must Block on 4+ for 1/next round on a NAT 4+ Damage Roll (6+ next round on a NAT 6+); a 1 Damage Roll deals them 1 Stock Damage. Excludes Disoriented, Armor Penetrating. (CON)", excludes: ["The Disoriented Effect", "Armor Penetrating Effect"] },
+      { name: "Armor Penetrating Effect", desc: "After denying 3 Offensive Rolls with NAT Blocks, on a 4+ reduce opponent's Strength by 1 for 2 rounds/next round. Excludes Crush, God's Eye, Tornado of Terror. (QP)", excludes: ["The Crush Effect", "Celestial Awakening Effect", "Tornado of Terror Effect"] },
+      { name: "The Ozaru Effect", desc: "After opponent fails 3 Blocks, on a 4+ reduce their Strength by 1 for 2 rounds/next round. Excludes God's Eye, Crush, Armor Penetrating. (QP)", excludes: ["Celestial Awakening Effect", "Armor Penetrating Effect"] },
+      { name: "Hammerhead Effect", desc: "-2 Block to opponent for 1/next round on a 4+ Damage Roll, extends per success (max 3). (CON)" },
+      { name: "Iron Whirlwind Effect", desc: "+2 Block to you for 1/next round on a 4+ Damage Roll, extends per success (max 3). (CON)" },
+      { name: "Disabled Affect", desc: "-1 Block to opponent for 1/next round on a 4+ if they roll 4-5 Damage (-2 next round on a 6). Max 2. (QP)" },
+      { name: "Harden Effect", desc: "+1 Block to you for 1/next round on a 4+ if opponent rolls 4-5 Damage (+2 next round on a 6). Max 2. (QP)" },
+      { name: "Iron Will Effect", desc: "-2 Block to opponent for 1/next round on a 4+ if they roll 1-3 Damage, extends per failure (max 3). (QP)" },
+      { name: "Stronghold Effect", desc: "+2 Block to you for 1/next round on a 4+ if opponent rolls 1-3 Damage, extends per failure (max 3). (QP)" },
+      { name: "Breaking Point Effect", desc: "On a 4+ Damage Roll opponent must Block your next Attack (next 2 on a 6, max 4 Attacks). Can't be taken with The Time Ark Effect. (CON)", excludes: ["The Time Ark Effect"] },
+      { name: "Dermal Armor Effect", desc: "+10 Stocks. Per 4+ Block this Turn, gain next round: 2 Blocks=+2 Block, 4=−2 Opponent Damage, 6=Negate the Base Effect that was Blocked. Excludes Tank, Force Field, Rubberman, Wreck, Perception, Lightspeed Fist, Metropolis, and any other disable/negate effect. (QP)", excludes: ["The Tank Effect", "The Force Field Effect", "The Rubberman Effect", "The Wreck Effect", "Perception Effect", "Lightspeed Fist Effect", "The Metropolis Effect"] },
+      { name: "The Wreck Effect", desc: "Block on NAT 4+ forces opponent to roll NAT 4+ or suffer 1 Stock Damage (1.5 on NAT 6+ Block). Roll a 1 and take 1 Stock Damage (Critical). Excludes Dermal Armor, Ark of Time, Perception. (QP)", excludes: ["Dermal Armor Effect", "Ark of Time Effect", "Perception Effect"] },
+      { name: "The Metropolis Effect", desc: "+8 Stocks. Per 4+ Block this Turn, gain next round: 2=+2 Block, 4=−2 Opponent Damage, 6=Reduce opponent's Stock Damage Rolls by 2. Excludes Tank, Force Field, Rubberman, Wreck, Perception, Dermal Armor, Mirror World. (QP)", excludes: ["The Tank Effect", "The Force Field Effect", "The Rubberman Effect", "The Wreck Effect", "Perception Effect", "Dermal Armor Effect", "Mirror World Effect"] },
+      { name: "Perception Effect", desc: "Block on 4+ makes your next Block un-nerfable (auto-pass on a 6). Excludes Dermal Armor, The Vision, The Wreck. (QP)", excludes: ["Dermal Armor Effect", "The Vision Effect", "The Wreck Effect"] },
+      { name: "The Smelting Guard Effect", desc: "Per Block roll this turn reduce opponent's next Stock Damage: 2-3=0.5, 4-5=1, 6=2. A 1 Block deals you +1 Stock Damage. Excludes Tank, Force Field, Rubberman, Substitute Jutsu. (PAS)", excludes: ["The Tank Effect", "The Force Field Effect", "The Rubberman Effect", "The Substitute Jutsu Effect"] },
+      { name: "The Roaring Guard Effect", desc: "Block on 4+ heals 1 Stock (1.5 on a 6, max 6, Base Stock only). Excludes Shadow Clone Jutsu and any other Guard Effect. (PAS)", excludes: ["The Shadow Clone Jutsu Effect"] },
+      { name: "The Unbreakable Guard Effect", desc: "After a 4+ Block, reduce opponent's next Damage Roll by 1 (−2 on a 6). Excludes Tank, Force Field, Rubberman, Sand Clone Jutsu, any other Guard Effect. (PAS)", excludes: ["The Tank Effect", "The Force Field Effect", "The Rubberman Effect", "The Sand Clone Jutsu Effect"] },
+      { name: "The Savage Guard Effect", desc: "Block on NAT 4 gives an additional Attack next round (2 on a 6, max 4; +0.5 Stock Damage each). Excludes Mist Clone Jutsu, any other Guard Effect. (PAS)", excludes: ["The Mist Clone Jutsu Effect"] },
+      { name: "Nul Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "Pressure Point Effect", desc: "Reserved — description pending.", stub: true },
+    ],
   },
   {
-    key:'toughness', label:'Toughness Base Effect', max:(r)=>RANK_INFO[r].effSlotMax,
-    items:[
-      {id:'tou_sinbad', name:'Sinbad Effect', tag:'QP', text:"-1 Toughness to the opponent for 1 round if they roll a 1/2/3 damage on a 4+; each failed roll extends it (max 3 rounds)."},
-      {id:'tou_maxout', name:'Max Out Effect', tag:'QP', text:"-1 Toughness to the opponent for 1 round if they roll a 4/5/6 damage on a 4+; on a 6 you take no damage and it still activates."},
-      {id:'tou_chidori', name:'Chidori Effect', tag:'CON', text:"-1 Toughness to the opponent for 1 round on a 4+ damage roll (3 rounds on a NAT 6)."},
-      {id:'tou_digivolution', name:'Digivolution Effect', tag:'CON', text:"+1 Toughness to yourself for 1 round on a 4+ damage roll (3 rounds on a NAT 6)."},
-      {id:'tou_vastolorde', name:"Vasto Lorde/Saint's Soul Effect", tag:'CON', text:"Gain 10 stocks and inflict -1 Toughness on the opponent.", excludes:['tou_destroyer']},
-      {id:'tou_destroyer', name:'Destroyer/Man of Steel Effect', tag:'PAS', text:"Choose +1 Toughness to yourself, or -1 Toughness to the opponent.", excludes:['tou_vastolorde']},
-      {id:'tou_cyborginitiative', name:'Cyborg Initiative Effect', tag:'—', text:"For every 3 defensive rolls the opponent fails against you, on a 4+ inflict Ultra Damage instead of Bleed (max 1/round; nullified if opponent Toughness ≥ your Strength +1)."},
-    ]
+    key: "speed",
+    label: "Speed Base Effects",
+    tagline: "Max 2 abilities (3 at Rank 4). Gear-triggered versions activate on 4-6.",
+    cap: 2, capRank4: 3,
+    effects: [
+      { name: "Instant Transmission Effect", desc: "-1 Speed to opponent for 1 round if they roll 1-3 Damage, on a 4+; extends per failure (max 3). (QP)" },
+      { name: "Uchiha Effect", desc: "-1 Speed to opponent for 1 round if they roll 4-6 Damage, on a 4+; on a 6 you take no damage and it activates. (QP)" },
+      { name: "Frozen Effect", desc: "-1 Speed to opponent for 1/next round on a 4+ Damage Roll (3 rounds on a NAT 6). (CON)" },
+      { name: "Speed Force Effect", desc: "+1 Speed to you for 1/next round on a 4+ Damage Roll (3 rounds on a NAT 6). (CON)" },
+      { name: "The Philosopher's Stone Effect", desc: "+10 Stocks, +1 Speed. Effect ends once the Vessel is gone. (CON)" },
+      { name: "Lightspeed Effect", desc: "+10 Stocks, -1 Speed to the opponent. Effect ends once the Vessel is gone. (CON)" },
+      { name: "GodSpeed Effect", desc: "+1 Speed to you, or -1 Speed to opponent (choose). Can't be taken with Lightspeed or The Philosopher's Stone. (PAS)", excludes: ["Lightspeed Effect", "The Philosopher's Stone Effect"] },
+      { name: "Inhuman Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "A.m.a.z.o Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "5th Gear Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "Wrath's Sight Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "The Truth/Beyonder Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "Cosmic Flow Effect", desc: "Reserved — description pending.", stub: true },
+    ],
   },
   {
-    key:'block', label:'Block Base Effect', max:(r)=>RANK_INFO[r].effSlotMax,
-    items:[
-      {id:'blk_defensivepenetration', name:'Defensive Penetration Effect', tag:'CON', text:"Forces the opponent's blocks onto a 4+ (then a 6 next round on a NAT 6), or 1 stock damage on a 1.", excludes:['blk_armorpenetrating']},
-      {id:'blk_armorpenetrating', name:'Armor Penetrating Effect', tag:'QP', text:"After denying 3 offensive rolls with NAT blocks, reduce the opponent's Strength by 1 for 2 rounds on a 4+.", excludes:['blk_defensivepenetration','blk_ozaru']},
-      {id:'blk_ozaru', name:'The Ozaru Effect', tag:'QP', text:"After the opponent fails 3 defensive rolls against your NAT damage, reduce their Strength by 1 for 2 rounds on a 4+.", excludes:['blk_armorpenetrating']},
-      {id:'blk_hammerhead', name:'Hammerhead Effect', tag:'CON', text:"-2 Block to the opponent for 1 round on a 4+ damage roll; extends per successful roll (max 3)."},
-      {id:'blk_ironwhirlwind', name:'Iron Whirlwind Effect', tag:'CON', text:"+2 Block to yourself for 1 round on a 4+ damage roll; extends per successful roll (max 3)."},
-      {id:'blk_disabled', name:'Disabled Effect', tag:'QP', text:"-2 Block to the opponent for 1 round on a 4+, if they roll a 4/5/6 damage."},
-      {id:'blk_harden', name:'Harden Effect', tag:'QP', text:"+2 Block to yourself for 1 round on a 4+, if the opponent rolls a 4/5/6 damage."},
-      {id:'blk_ironwill', name:'Iron Will Effect', tag:'QP', text:"-2 Block to the opponent for 1 round on a 4+ if they roll 1/2/3 damage; extends on each failed roll (max 3)."},
-      {id:'blk_stronghold', name:'Stronghold Effect', tag:'QP', text:"+2 Block to yourself for 1 round on a 4+ when the opponent rolls 1/2/3 damage; extends on each failed roll (max 3)."},
-      {id:'blk_breakingpoint', name:'Breaking Point Effect', tag:'CON', text:"On a 4+ damage roll the opponent must block your next attack (next 2 on a 6).", excludes:['dodge_timeark']},
-      {id:'blk_dermalarmor', name:'Dermal Armor Effect', tag:'QP', text:"Gain 10 stocks; every 4+ block this turn grants a scaling bonus next round (2=+2 Block, 4=-2 opponent damage, 6=negate a base effect)."},
-      {id:'blk_wreck', name:'The Wreck Effect', tag:'QP', text:"On a NAT 4+ block, the opponent must roll NAT 4+ or suffer 1 stock damage (1.5 on a 6 block)."},
-      {id:'blk_metropolis', name:'The Metropolis Effect', tag:'QP', text:"Gain 8 stocks; every 4+ block this turn grants a scaling bonus next round (2=+2 Block, 4=-2 opponent damage, 6=reduce opponent stock damage by 2)."},
-      {id:'blk_perception', name:'Perception Effect', tag:'QP', text:"On a 4+ block, your next block can't be nerfed; on a 6 block, your next block passes automatically."},
-      {id:'blk_smeltingguard', name:'The Smelting Guard Effect', tag:'PAS', text:"Scale block rolls (2-3/4-5/6) into reducing the opponent's next attack by 0.5/1/2 stock; a 1 costs you 1 extra stock damage."},
-      {id:'blk_roaringguard', name:'The Roaring Guard Effect', tag:'PAS', text:"On a 4+ block, heal 1 stock (1.5 on a 6), max 6 stocks — Base Stock only."},
-      {id:'blk_unbreakableguard', name:'The Unbreakable Guard Effect', tag:'PAS', text:"After a 4+ block, reduce the opponent's next damage roll by 1 (-2 on a 6)."},
-      {id:'blk_savageguard', name:'The Savage Guard Effect', tag:'PAS', text:"On a NAT 4 block, gain an additional attack next round (2 on a 6, max 4); those attacks deal +0.5 stock damage."},
-    ]
+    key: "dodge",
+    label: "Dodge Base Effects",
+    tagline: "Max 2 abilities (3 at Rank 4). Gear-triggered versions activate on 4-6.",
+    cap: 2, capRank4: 3,
+    effects: [
+      { name: "The Disoriented Effect", desc: "Opponent must Dodge on 4+ for 1/next round on a NAT 4+ Damage Roll (6+ next round on NAT 6+); a 1 Damage Roll deals them 1 Stock Damage. Excludes Crush Effect. (CON)", excludes: ["The Crush Effect"] },
+      { name: "The Crush Effect", desc: "After denying 3 Offensive Rolls with NAT Dodges, on a 4+ reduce opponent's Initiative by 1 for 2 rounds/next round. Excludes Armor Penetrating, God's Eye, Tornado of Terror. (QP)", excludes: ["Armor Penetrating Effect", "Celestial Awakening Effect", "Tornado of Terror Effect"] },
+      { name: "Celestial Awakening Effect", desc: "After opponent fails 3 Dodges, on a 4+ reduce their Initiative by 1 for 2 rounds/next round. Excludes Tornado of Terror, Crush, Armor Penetrating. (QP)", excludes: ["Tornado of Terror Effect", "The Crush Effect", "Armor Penetrating Effect"] },
+      { name: "Frost Effect", desc: "-2 Dodge to opponent for 1/next round on a 4+ Damage Roll, extends per success (max 3). (CON)" },
+      { name: "Cripple Effect", desc: "+2 Dodge to you for 1/next round on a 4+ Damage Roll, extends per success (max 3). (CON)" },
+      { name: "The Rewind Effect", desc: "-1 Dodge to opponent for 1/next round on a 4+ if they roll 4-5 Damage (-2 next round on a 6). Max 2. (QP)" },
+      { name: "The Camo Effect", desc: "+1 Dodge to you for 1/next round on a 4+ if opponent rolls 4-5 Damage (+2 next round on a 6). Max 2. (QP)" },
+      { name: "The Redo Effect", desc: "-2 Dodge to opponent for 1/next round on a 4+ if they roll 1-3 Damage, extends per failure (max 3). (QP)" },
+      { name: "The Double Team Effect", desc: "+2 Dodge to you for 1/next round on a 4+ if opponent rolls 1-3 Damage, extends per failure (max 3). (QP)" },
+      { name: "The Time Ark Effect", desc: "On a 4+ Damage Roll opponent must Dodge your next Attack (next 2 on a 6, max 4). Can't be taken with Breaking Point. (CON)", excludes: ["Breaking Point Effect"] },
+      { name: "Lightspeed Fist Effect", desc: "+10 Stocks. Per 4+ Dodge this Turn, gain next round: 2=+2 Dodge, 4=−2 Opponent Accuracy, 6=Negate the Base Effect that was Dodged. Excludes Tank, Force Field, Rubberman, Ark of Time, The Vision, Mirror World, Dermal Armor, and any other disable/negate effect. (QP)", excludes: ["The Tank Effect", "The Force Field Effect", "The Rubberman Effect", "Ark of Time Effect", "The Vision Effect", "Mirror World Effect", "Dermal Armor Effect"] },
+      { name: "Ark of Time Effect", desc: "Dodge on NAT 4+ forces opponent to roll NAT 4+ or suffer 1 Stock Damage (1.5 on NAT 6+ Dodge). Roll a 1 and take 1 Stock Damage (Critical). Excludes The Vision. (QP)", excludes: ["The Vision Effect"] },
+      { name: "Mirror World Effect", desc: "+8 Stocks. Per 4+ Dodge this Turn, gain next round: 2=+2 Dodge, 4=−2 Opponent Accuracy, 6=Reduce opponent's Attacks by 4. Excludes Tank, Force Field, Rubberman, Ark of Time, Vision, Lightspeed Fist, Metropolis. (QP)", excludes: ["The Tank Effect", "The Force Field Effect", "The Rubberman Effect", "Ark of Time Effect", "The Vision Effect", "Lightspeed Fist Effect", "The Metropolis Effect"] },
+      { name: "The Vision Effect", desc: "Dodge on 4+ makes your next Dodge un-nerfable (auto-pass on a 6). Excludes Ark of Time. (QP)", excludes: ["Ark of Time Effect"] },
+      { name: "The Substitute Jutsu Effect", desc: "Per Dodge roll this turn reduce opponent's Attacks: 4-5=−1, 6=−2. A 1 Dodge gives opponent +1 Attack. Excludes Tank, Force Field, Rubberman, Smelting Guard. (PAS)", excludes: ["The Tank Effect", "The Force Field Effect", "The Rubberman Effect", "The Smelting Guard Effect"] },
+      { name: "The Shadow Clone Jutsu Effect", desc: "Dodge on 4+ heals 1 Stock (1.5 on a 6, max 6, Base Stock only). Excludes Roaring Guard, any other Jutsu Effect. (PAS)", excludes: ["The Roaring Guard Effect"] },
+      { name: "The Sand Clone Jutsu Effect", desc: "After a 4+ Dodge, reduce opponent's next Damage Roll by 1 (−2 on a 6, max 2). Excludes Tank, Force Field, Rubberman, Unbreakable Guard, any other Jutsu. (PAS)", excludes: ["The Tank Effect", "The Force Field Effect", "The Rubberman Effect", "The Unbreakable Guard Effect"] },
+      { name: "The Mist Clone Jutsu Effect", desc: "Dodge on NAT 4 gives an additional Attack next round (2 on a 6, max 4; +0.5 Stock Damage each). Excludes Savage Guard, any other Jutsu. (PAS)", excludes: ["The Savage Guard Effect"] },
+      { name: "Flashy Flash Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "The Dash Effect", desc: "Reserved — description pending.", stub: true },
+    ],
   },
   {
-    key:'speed', label:'Speed Base Effect', max:(r)=>RANK_INFO[r].effSlotMax,
-    items:[
-      {id:'spd_instanttransmission', name:'Instant Transmission Effect', tag:'QP', text:"-1 Speed to the opponent for 1 round if they roll 1/2/3 damage on a 4+; extends on each failed roll (max 3)."},
-      {id:'spd_uchiha', name:'Uchiha Effect', tag:'QP', text:"-1 Speed to the opponent for 1 round if they roll 4/5/6 damage on a 4+; on a 6 you take no damage and it still activates."},
-      {id:'spd_frozen', name:'Frozen Effect', tag:'CON', text:"-1 Speed to the opponent for 1 round on a 4+ damage roll (3 rounds on a NAT 6)."},
-      {id:'spd_speedforce', name:'Speed Force Effect', tag:'CON', text:"+1 Speed to yourself for 1 round on a 4+ damage roll (3 rounds on a NAT 6)."},
-      {id:'spd_philosophersstone', name:"The Philosopher's Stone Effect", tag:'CON', text:"Gain 10 stocks and +1 Speed while the vessel lasts.", excludes:['spd_godspeed']},
-      {id:'spd_lightspeed', name:'Lightspeed Effect', tag:'CON', text:"Gain 10 stocks and inflict -1 Speed on the opponent while the vessel lasts.", excludes:['spd_godspeed']},
-      {id:'spd_godspeed', name:'GodSpeed Effect', tag:'PAS', text:"Choose +1 Speed to yourself, or -1 Speed to the opponent.", excludes:['spd_lightspeed','spd_philosophersstone']},
-    ]
+    key: "strength",
+    label: "Strength Base Effects",
+    tagline: "Max 2 abilities (3 at Rank 4). Gear-triggered versions activate on 4-6.",
+    cap: 2, capRank4: 3,
+    effects: [
+      { name: "Yami Yami no mi Effect", desc: "-1 Strength to opponent for 1 round if they roll 1-3 Damage, on a 4+; extends per failure (max 3). (QP)" },
+      { name: "Old Strong Effect", desc: "-1 Strength to opponent for 1 round if they roll 4-6 Damage, on a 4+; on a 6 you take no damage and it activates. (QP)" },
+      { name: "Snatch Effect", desc: "-1 Strength to opponent for 1/next round on a 4+ Damage Roll (3 rounds on a NAT 6). (CON)" },
+      { name: "The Force Effect", desc: "+1 Strength to you for 1/next round on a 4+ Damage Roll (3 rounds on a NAT 6). (CON)" },
+      { name: "The Dark Vessel Effect", desc: "+10 Stocks, +1 Strength. Ends once the Vessel is gone. (CON)" },
+      { name: "One's Blessing Effect", desc: "+10 Stocks, -1 Strength to the opponent. (CON)" },
+      { name: "Limit Breaker Effect", desc: "+1 Strength to you, or -1 Strength to opponent (choose). Can't be taken with One's Blessing or The Dark Vessel. (PAS)", excludes: ["One's Blessing Effect", "The Dark Vessel Effect"] },
+      { name: "All or Nothing", desc: "Reserved — description pending.", stub: true },
+      { name: "God's Grace", desc: "Reserved — description pending.", stub: true },
+      { name: "Kaioken Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "For the King Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "The Fullmetal Effect", desc: "Reserved — description pending.", stub: true },
+    ],
   },
   {
-    key:'dodge', label:'Dodge Base Effect', max:(r)=>RANK_INFO[r].effSlotMax,
-    items:[
-      {id:'dodge_disoriented', name:'The Disoriented Effect', tag:'CON', text:"Forces the opponent's dodges onto a 4+ (then a 6 next round on a NAT 6), or 1 stock damage on a 1.", excludes:['dodge_crush']},
-      {id:'dodge_crush', name:'Crush Effect', tag:'QP', text:"After denying 3 offensive rolls with NAT dodges, reduce the opponent's Initiative by 1 for 2 rounds on a 4+.", excludes:['dodge_disoriented','dodge_celestialawakening']},
-      {id:'dodge_celestialawakening', name:'Celestial Awakening Effect', tag:'QP', text:"After the opponent fails 3 defensive rolls against your NAT damage, reduce their Initiative by 1 for 2 rounds on a 4+.", excludes:['dodge_crush']},
-      {id:'dodge_frost', name:'Frost Effect', tag:'CON', text:"-2 Dodge to the opponent for 1 round on a 4+ damage roll; extends per successful roll (max 3)."},
-      {id:'dodge_cripple', name:'Cripple Effect', tag:'CON', text:"+2 Dodge to yourself for 1 round on a 4+ damage roll; extends per successful roll (max 3)."},
-      {id:'dodge_rewind', name:'The Rewind Effect', tag:'QP', text:"-2 Dodge to the opponent for 1 round on a 4+, if they roll 4/5/6 damage."},
-      {id:'dodge_camo', name:'The Camo Effect', tag:'QP', text:"+2 Dodge to yourself for 1 round on a 4+, if the opponent rolls 4/5/6 damage."},
-      {id:'dodge_redo', name:'The Redo Effect', tag:'QP', text:"-2 Dodge to the opponent for 1 round on a 4+ if they roll 1/2/3 damage; extends on each failed roll (max 3)."},
-      {id:'dodge_doubleteam', name:'The Double Team Effect', tag:'QP', text:"+2 Dodge to yourself for 1 round on a 4+ when the opponent rolls 1/2/3 damage; extends on each failed roll (max 3)."},
-      {id:'dodge_timeark', name:'The Time Ark Effect', tag:'CON', text:"On a 4+ damage roll the opponent must dodge your next attack (next 2 on a 6).", excludes:['blk_breakingpoint']},
-      {id:'dodge_lightspeedfist', name:'Lightspeed Fist Effect', tag:'QP', text:"Gain 10 stocks; every 4+ dodge this turn grants a scaling bonus next round (2=+2 Dodge, 4=-2 opponent accuracy, 6=negate a base effect)."},
-      {id:'dodge_arkoftime', name:'Ark of Time Effect', tag:'QP', text:"On a NAT 4+ dodge, the opponent must roll NAT 4+ or suffer 1 stock damage (1.5 on a 6 dodge).", excludes:['dodge_vision']},
-      {id:'dodge_mirrorworld', name:'Mirror World Effect', tag:'QP', text:"Gain 8 stocks; every 4+ dodge this turn grants a scaling bonus next round (2=+2 Dodge, 4=-2 opponent accuracy, 6=reduce opponent attacks by 4)."},
-      {id:'dodge_vision', name:'The Vision Effect', tag:'QP', text:"On a 4+ dodge, your next dodge can't be nerfed; on a 6 dodge, your next dodge passes automatically.", excludes:['dodge_arkoftime']},
-      {id:'dodge_substitutejutsu', name:'The Substitute Jutsu Effect', tag:'PAS', text:"Scale dodge rolls (2-3/4-5/6) into reducing the opponent's next attack by 0.5/1/2 stock; a 1 costs you 1 extra stock damage."},
-      {id:'dodge_shadowclonejutsu', name:'The Shadow Clone Jutsu Effect', tag:'PAS', text:"On a 4+ dodge, heal 1 stock (1.5 on a 6), max 6 stocks — Base Stock only."},
-      {id:'dodge_sandclonejutsu', name:'The Sand Clone Jutsu Effect', tag:'PAS', text:"After a 4+ dodge, reduce the opponent's next damage roll by 1 (-2 on a 6), max 2."},
-      {id:'dodge_mistclonejutsu', name:'The Mist Clone Jutsu Effect', tag:'PAS', text:"On a NAT 4 dodge, gain an additional attack next round (2 on a 6, max 4); those attacks deal +0.5 stock damage."},
-    ]
+    key: "damage",
+    label: "Damage Base Effects",
+    tagline: "Max 2 abilities (3 at Rank 4). Gear-triggered versions activate on 4-6.",
+    cap: 2, capRank4: 3,
+    effects: [
+      { name: "Divine Thousand Cuts Effect", desc: "Opponent must Damage you on NAT 4+ for 1/next round on a NAT 4+ Damage Roll (NAT 6 next round on NAT 6). A 1 Damage Roll deals them 1 Stock Damage. Unaffected by Ultra Damage. Excludes Tornado of Terror. (CON)", excludes: ["Tornado of Terror Effect"] },
+      { name: "Beyond Omega Effect", desc: "After denying 3 Offensive Rolls with NAT Dodge/Block, on a 4+ reduce opponent's Toughness by 1 for 2 rounds/next round. Excludes Crush, God's Eye, Tornado of Terror. (QP)", excludes: ["The Crush Effect", "Celestial Awakening Effect", "Tornado of Terror Effect"] },
+      { name: "Tornado of Terror Effect", desc: "After opponent fails 3 Defensive Rolls, on a 4+ reduce their Toughness by 1 for 2 rounds/next round. Excludes God's Eye, Crush, Armor Penetrating. (QP)", excludes: ["Celestial Awakening Effect", "The Crush Effect", "Armor Penetrating Effect"] },
+      { name: "The Coup de gras Effect", desc: "-2 Damage to opponent for 1/next round on a NAT 4+ Damage Roll, extends per success (max 3). (CON)" },
+      { name: "The Killing Intent Effect", desc: "+2 Damage to you for 1/next round on a NAT 4+ Damage Roll, extends per success (max 3). (CON)" },
+      { name: "The Virus Effect", desc: "-1 Damage to opponent for 1/next round on a 4+ if they roll 4-5 Damage (-2 next round on a 6). Max 2. (QP)" },
+      { name: "The Critical Overdrive Effect", desc: "+1 Damage to you for 1/next round on a 4+ if opponent rolls 4-5 Damage (+2 next round on a 6). Max 2. (QP)" },
+      { name: "The Acid Effect", desc: "-2 Damage to opponent for 1/next round on a 4+ if they roll 1-3 Damage, extends per failure (max 3). (QP)" },
+      { name: "The Infected Effect", desc: "+2 Damage to you for 1/next round on a 4+ if opponent rolls 1-3 Damage, extends per failure (max 3). (QP)" },
+      { name: "Wind Scar Effect", desc: "+7 Stocks. Per NAT 4+ Damage Roll this Turn, gain Stock Damage on all attacks equal to rolls landed at Round's end: 2=1, 3=2, 4=3. Excludes Warhammer, Blackout, Big Bang, Melting, Kryptonite. (CON)", excludes: ["The Warhammer Effect", "The Blackout Effect", "The Big Bang Effect", "The Melting Effect", "The Kryptonite Effect"] },
+      { name: "The Big Bang Effect", desc: "Per 2 successful NAT 4+ Damage Rolls, immediately inflict 2 extra Stock Damage (max 6). Excludes Pride Flare, Melting, Kryptonite, Wind Scar, 10 Fold Funeral, Warhammer. (PAS)", excludes: ["Pride Flare Effect", "The Melting Effect", "The Kryptonite Effect", "Wind Scar Effect", "The 10 Fold Funeral Effect", "The Warhammer Effect"] },
+      { name: "The Melting Effect", desc: "Per 2 successful NAT 4+ Damage Rolls, on a 4+ take away 1 of the opponent's next Attacks (max 6). Excludes Big Bang, Kryptonite, Wind Scar, Matrix, Prince's Pride, Tank, Force Field, Rubberman. (QP)", excludes: ["The Big Bang Effect", "The Kryptonite Effect", "Wind Scar Effect", "The Matrix Effect", "The Prince's Pride Effect", "The Tank Effect", "The Force Field Effect", "The Rubberman Effect"] },
+      { name: "The Kryptonite Effect", desc: "After 2 successful NAT 4+ Damage Rolls, on a 4+ turn your 3rd Damage Roll into Ultra Damage (can't be Countered, max 4/turn). Excludes Warhammer, Wind Scar, Big Bang, Melting, 10 Fold Funeral, Paralyzer. (CON)", excludes: ["The Warhammer Effect", "Wind Scar Effect", "The Big Bang Effect", "The Melting Effect", "The 10 Fold Funeral Effect", "The Paralyzer Effect"] },
+      { name: "The Brutal Effect", desc: "+9 Stocks. Per NAT 4+ Damage Roll this Turn, gain next round: 2=+2 Attacks, 3=+4 Attacks, 4=opponent can't Block those 4 Attacks. Excludes Toxic, Warhammer, Big Bang, Wind Scar, Kryptonite, Melting, 10 Fold Funeral, Lock Down. (CON)", excludes: ["The Toxic Effect", "The Warhammer Effect", "The Big Bang Effect", "Wind Scar Effect", "The Kryptonite Effect", "The Melting Effect", "The 10 Fold Funeral Effect", "The Lock Down Effect"] },
+      { name: "The Warhammer Effect", desc: "+7 Stocks. Per NAT 4+ Damage Roll this Turn, gain next round: 2=+2 Damage, 3=+4 Attacks, 4=+1 Stock Damage on attacks. Excludes Big Bang, Pride Flare, Kryptonite, Paralyzer, 10 Fold Funeral.", excludes: ["The Big Bang Effect", "Pride Flare Effect", "The Kryptonite Effect", "The Paralyzer Effect", "The 10 Fold Funeral Effect"] },
+      { name: "The Toxic Effect", desc: "Every successful NAT 4+ Damage Roll grants an additional Attack Roll (must roll to hit/damage, max 8). Excludes Warhammer, Serious Series. (PAS)", excludes: ["The Warhammer Effect", "The Serious Series Effect"] },
+      { name: "The Bleeding Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "The Scissorhands Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "The Burn Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "The Sand coffin Effect", desc: "Reserved — description pending.", stub: true },
+    ],
   },
   {
-    key:'strength', label:'Strength Base Effect', max:(r)=>RANK_INFO[r].effSlotMax,
-    items:[
-      {id:'str_yamiyaminomi', name:'Yami Yami no mi Effect', tag:'QP', text:"-1 Strength to the opponent for 1 round if they roll 1/2/3 damage on a 4+; extends on each failed roll (max 3)."},
-      {id:'str_oldstrong', name:'Old Strong Effect', tag:'QP', text:"-1 Strength to the opponent for 1 round if they roll 4/5/6 damage on a 4+; on a 6 you take no damage and it still activates."},
-      {id:'str_snatch', name:'Snatch Effect', tag:'CON', text:"-1 Strength to the opponent for 1 round on a 4+ damage roll (3 rounds on a NAT 6)."},
-      {id:'str_force', name:'The Force Effect', tag:'CON', text:"+1 Strength to yourself for 1 round on a 4+ damage roll (3 rounds on a NAT 6)."},
-      {id:'str_darkvessel', name:'The Dark Vessel Effect', tag:'CON', text:"Gain 10 stocks and +1 Strength while the vessel lasts.", excludes:['str_limitbreaker']},
-      {id:'str_onesblessing', name:"One's Blessing Effect", tag:'CON', text:"Gain 10 stocks and inflict -1 Strength on the opponent.", excludes:['str_limitbreaker']},
-      {id:'str_limitbreaker', name:'Limit Breaker Effect', tag:'PAS', text:"Choose +1 Strength to yourself, or -1 Strength to the opponent.", excludes:['str_onesblessing','str_darkvessel']},
-    ]
+    key: "initiative",
+    label: "Initiative Base Effects",
+    tagline: "Max 2 abilities (3 at Rank 4). Gear-triggered versions activate on 4-6.",
+    cap: 2, capRank4: 3,
+    effects: [
+      { name: "Foresight Effect", desc: "-1 Initiative to opponent for 1 round if they roll 1-3 Damage, on a 4+; extends per failure (max 3). (QP)" },
+      { name: "Follow-up Effect", desc: "-1 Initiative to opponent for 1 round if they roll 4-6 Damage, on a 4+; on a 6 you take no damage and it activates. (QP)" },
+      { name: "Insight Effect", desc: "-1 Initiative to opponent for 1/next round on a 4+ Damage Roll (3 rounds on a NAT 6). (CON)" },
+      { name: "The King's Candidate Effect", desc: "+1 Initiative to you for 1/next round on a 4+ Damage Roll (3 rounds on a NAT 6). (CON)" },
+      { name: "Tactical Reversal Effect", desc: "+10 Stocks, +1 Initiative. Ends once the Vessel is gone. (CON)" },
+      { name: "The Nightwing Effect", desc: "+10 Stocks, -1 Initiative to the opponent. (CON)" },
+      { name: "The Darwin Effect", desc: "+1 Initiative to you, or -1 Initiative to opponent (choose). Can't be taken with Tactical Reversal or Nightwing. (PAS)", excludes: ["Tactical Reversal Effect", "The Nightwing Effect"] },
+      { name: "Foretold Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "Plan B Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "Power Cancellation Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "Danger Zone Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "Shock Nullification Effect", desc: "Reserved — description pending.", stub: true },
+    ],
   },
   {
-    key:'damage', label:'Damage Base Effect', max:(r)=>RANK_INFO[r].effSlotMax,
-    items:[
-      {id:'dmg_divinethousandcuts', name:'Divine Thousand Cuts Effect', tag:'CON', text:"Forces the opponent to damage you on NAT 4+ (then NAT 6), or 1 stock damage on a 1. Unaffected by Ultra Damage.", excludes:['dmg_tornadoofterror']},
-      {id:'dmg_beyondomega', name:'Beyond Omega Effect', tag:'QP', text:"After denying 3 offensive rolls with NAT dodge/block, reduce the opponent's Toughness by 1 for 2 rounds on a 4+.", excludes:['dodge_crush','acc_godseye','dmg_tornadoofterror']},
-      {id:'dmg_tornadoofterror', name:'Tornado of Terror Effect', tag:'QP', text:"After the opponent fails 3 defensive rolls against your NAT damage, reduce their Toughness by 1 for 2 rounds on a 4+.", excludes:['acc_godseye','dodge_crush','blk_armorpenetrating']},
-      {id:'dmg_coupdegras', name:'The Coup de Gras Effect', tag:'CON', text:"-2 Damage to the opponent for 1 round on a NAT 4+ damage roll; extends per successful roll (max 3)."},
-      {id:'dmg_killingintent', name:'The Killing Intent Effect', tag:'CON', text:"+2 Damage to yourself for 1 round on a NAT 4+ damage roll; extends per successful roll (max 3)."},
-      {id:'dmg_virus', name:'The Virus Effect', tag:'QP', text:"-2 Damage to the opponent for 1 round on a 4+, if they roll 4/5/6 damage."},
-      {id:'dmg_criticaloverdrive', name:'The Critical Overdrive Effect', tag:'QP', text:"+2 Damage to yourself for 1 round on a 4+, if the opponent rolls 4/5/6 damage."},
-      {id:'dmg_acid', name:'The Acid Effect', tag:'QP', text:"-2 Damage to the opponent for 1 round on a 4+ if they roll 1/2/3 damage; extends on each failed roll (max 3)."},
-      {id:'dmg_infected', name:'The Infected Effect', tag:'QP', text:"+2 Damage to yourself for 1 round on a 4+ when the opponent rolls 1/2/3 damage; extends on each failed roll (max 3)."},
-      {id:'dmg_windscar', name:'Wind Scar Effect', tag:'CON', text:"Gain 7 stocks; every NAT 4+ damage roll this turn adds bonus stock damage equal to how many you rolled, at round's end.", excludes:['dmg_warhammer','acc_blackout','dmg_bigbang','dmg_melting','dmg_kryptonite']},
-      {id:'dmg_bigbang', name:'The Big Bang Effect', tag:'PAS', text:"Every 2 successful NAT 4+ damage rolls immediately inflicts +2 stock damage (max 6).", excludes:['acc_prideflare','dmg_melting','dmg_kryptonite','dmg_windscar','acc_10foldfuneral','dmg_warhammer']},
-      {id:'dmg_melting', name:'The Melting Effect', tag:'QP', text:"Every 2 successful NAT 4+ damage rolls, on a 4+, remove one of the opponent's next attacks (max 6).", excludes:['dmg_bigbang','dmg_kryptonite','dmg_windscar','acc_matrix','stk_princespride','stk_tank','stk_forcefield','stk_rubberman']},
-      {id:'dmg_kryptonite', name:'The Kryptonite Effect', tag:'CON', text:"After 2 successful NAT 4+ damage rolls, on a 4+ turn your 3rd roll into an uncounterable Ultra Damage roll (max 4/turn).", excludes:['dmg_warhammer','dmg_windscar','dmg_bigbang','dmg_melting','acc_10foldfuneral','acc_paralyzer']},
-      {id:'dmg_brutal', name:'The Brutal Effect', tag:'CON', text:"Gain 8 stocks; every NAT 4+ damage roll this turn grants a scaling bonus next round (2=+2 attacks, 3=+4 attacks, 4=opponent's first 2 attacks forced physical or projectile).", excludes:['dmg_toxic','dmg_warhammer','dmg_bigbang','dmg_windscar','dmg_kryptonite','dmg_melting','acc_10foldfuneral','acc_lockdown']},
-      {id:'dmg_warhammer', name:'The Warhammer Effect', tag:'CON', text:"Gain 7 stocks; every NAT 4+ damage roll this turn grants a scaling bonus next round (2=+2 Damage, 3=+4 attacks, 4=+1 stock damage on attacks).", excludes:['acc_10foldfuneral']},
-      {id:'dmg_toxic', name:'The Toxic Effect', tag:'PAS', text:"Every successful NAT 4+ damage roll grants an additional attack roll (max 8); must still roll to hit and damage.", excludes:['dmg_warhammer','acc_seriousseries']},
-    ]
+    key: "accuracy",
+    label: "Accuracy Base Effects",
+    tagline: "Max 2 abilities (3 at Rank 4). Gear-triggered versions activate on 4-6.",
+    cap: 2, capRank4: 3,
+    effects: [
+      { name: "The Solar Flare Effect", desc: "Opponent must hit you on 4+ for 1/next round on a successful NAT 4+ Damage/Accuracy Roll (6 next round on NAT 6). A 1 Damage Roll deals them 1 Stock Damage. Unaffected by Ultra Damage. Excludes God's Eye, Divine Thousand Cuts. (CON)", excludes: ["Celestial Awakening Effect", "Divine Thousand Cuts Effect"] },
+      { name: "The Dark Knight Effect", desc: "After denying 3 Offensive Rolls with NAT Dodge/Block, on a 4+ reduce opponent's Speed by 1 for 2 rounds/next round. Excludes Crush, God's Eye, Tornado of Terror. (QP)", excludes: ["The Crush Effect", "Celestial Awakening Effect", "Tornado of Terror Effect"] },
+      { name: "The God's Eye Effect", desc: "After opponent fails 3 Defensive Rolls, on a 4+ reduce their Speed by 1 for 2 rounds/next round. Excludes Tornado of Terror, Crush, Armor Penetrating. (QP)", excludes: ["Tornado of Terror Effect", "The Crush Effect", "Armor Penetrating Effect"] },
+      { name: "The Quick Claw Effect", desc: "-2 Accuracy to opponent for 1/next round on a successful 4+ Damage/Accuracy Roll, extends per success (max 3). (CON)" },
+      { name: "The Jumper Effect", desc: "+2 Accuracy to you for 1/next round on a successful 4+ Damage/Accuracy Roll, extends per success (max 3). (CON)" },
+      { name: "The Blinding Effect", desc: "-1 Accuracy to opponent for 1/next round on a 4+ if they roll 4-5 Damage (-2 next round on a 6). Max 2. (QP)" },
+      { name: "The Acceleration Effect", desc: "+1 Accuracy to you for 1/next round on a 4+ if opponent rolls 4-5 Damage (+2 next round on a 6). Max 2. (QP)" },
+      { name: "The Nightmare Effect", desc: "-2 Accuracy to opponent for 1/next round on a 4+ if they roll 1-3 Damage/Accuracy, extends per failure (max 3). (QP)" },
+      { name: "The Whirlwind Slashing Effect", desc: "+2 Accuracy to you for 1/next round on a 4+ if opponent rolls 1-3 Damage/Accuracy, extends per failure (max 3). (QP)" },
+      { name: "The Blackout Effect", desc: "+7 Stocks. Per successful 4+ Accuracy Roll this Turn, gain Stock Damage at Round's end: 2=0.5, 3=1, 4=1.5. Excludes Wind Scar, 10 Fold Funeral, Pride Flare, Matrix, Paralyzer. (CON)", excludes: ["Wind Scar Effect", "The 10 Fold Funeral Effect", "Pride Flare Effect", "The Matrix Effect", "The Paralyzer Effect"] },
+      { name: "Pride Flare Effect", desc: "Per 2 successful 4+ Accuracy Rolls, immediately inflict 1 extra Stock Damage (max 3). Excludes Matrix, Paralyzer, Blackout, 10 Fold Funeral, Warhammer, Big Bang. (PAS)", excludes: ["The Matrix Effect", "The Paralyzer Effect", "The Blackout Effect", "The 10 Fold Funeral Effect", "The Warhammer Effect", "The Big Bang Effect"] },
+      { name: "The Matrix Effect", desc: "Per 2 successful 4+ Accuracy Rolls, on a 4+ take away 1 of the opponent's next Attacks (max 3). Excludes Paralyzer, Blackout, Pride Flare, Melting, Tank, Force Field, Rubberman. (QP)", excludes: ["The Paralyzer Effect", "The Blackout Effect", "Pride Flare Effect", "The Melting Effect", "The Tank Effect", "The Force Field Effect", "The Rubberman Effect"] },
+      { name: "The Paralyzer Effect", desc: "After 2 successful 4+ Accuracy Rolls, on a 4+ turn your 3rd Damage Roll into Ultra Damage (can't be Countered, max 2/turn). Excludes Warhammer, 10 Fold Funeral, Blackout, Pride Flare, Matrix, Kryptonite. (CON)", excludes: ["The Warhammer Effect", "The 10 Fold Funeral Effect", "The Blackout Effect", "Pride Flare Effect", "The Matrix Effect", "The Kryptonite Effect"] },
+      { name: "The Lock Down Effect", desc: "+8 Stocks. Per 4+ Hitting Roll this Turn, gain next round: 2=+1 Attack, 3=+3 Attacks, 4=opponent can't Dodge those 3 Attacks. Excludes Blackout, Pride Flare, Matrix, Paralyzer, 10 Fold Funeral, Serious Series, Brutal. (CON)", excludes: ["The Blackout Effect", "Pride Flare Effect", "The Matrix Effect", "The Paralyzer Effect", "The 10 Fold Funeral Effect", "The Serious Series Effect", "The Brutal Effect"] },
+      { name: "The 10 Fold Funeral Effect", desc: "+7 Stocks. Per 4+ Hitting Roll this Turn, gain next round: 2=+2 Accuracy, 3=+2 Attacks, 4=+1 Stock Damage on the 2 Additional Attacks. Excludes Warhammer, Big Bang, Paralyzer, Kryptonite, Pride Flare.", excludes: ["The Warhammer Effect", "The Big Bang Effect", "The Paralyzer Effect", "The Kryptonite Effect", "Pride Flare Effect"] },
+      { name: "The Serious Series Effect", desc: "Every 4+ Accuracy Roll grants an additional Attack Roll (must roll to hit/damage, max 4). Excludes 10 Fold Funeral, Toxic. (PAS)", excludes: ["The 10 Fold Funeral Effect", "The Toxic Effect"] },
+      { name: "The Observational Haki Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "Dragon Flare Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "Flash Flare Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "The Shake Down Effect", desc: "Reserved — description pending.", stub: true },
+      { name: "The Smoke Effect", desc: "Reserved — description pending.", stub: true },
+    ],
   },
   {
-    key:'initiative', label:'Initiative Base Effect', max:(r)=>RANK_INFO[r].effSlotMax,
-    items:[
-      {id:'init_foresight', name:'Foresight Effect', tag:'QP', text:"-1 Initiative to the opponent for 1 round if they roll 1/2/3 damage on a 4+; extends on each failed roll (max 3)."},
-      {id:'init_followup', name:'Follow-up Effect', tag:'QP', text:"-1 Initiative to the opponent for 1 round if they roll 4/5/6 damage on a 4+; on a 6 you take no damage and it still activates."},
-      {id:'init_insight', name:'Insight Effect', tag:'CON', text:"-1 Initiative to the opponent for 1 round on a 4+ damage roll (3 rounds on a NAT 6)."},
-      {id:'init_kingscandidate', name:"The King's Candidate Effect", tag:'CON', text:"+1 Initiative to yourself for 1 round on a 4+ damage roll (3 rounds on a NAT 6)."},
-      {id:'init_tacticalreversal', name:'Tactical Reversal Effect', tag:'CON', text:"Gain 10 stocks and +1 Initiative while the vessel lasts.", excludes:['init_darwin']},
-      {id:'init_nightwing', name:'The Nightwing Effect', tag:'CON', text:"Gain 10 stocks and inflict -1 Initiative on the opponent.", excludes:['init_darwin']},
-      {id:'init_darwin', name:'The Darwin Effect', tag:'PAS', text:"Choose +1 Initiative to yourself, or -1 Initiative to the opponent.", excludes:['init_tacticalreversal','init_nightwing']},
-    ]
+    key: "stock",
+    label: "Stock Base Effects",
+    tagline: "Max 2 abilities (3 at Rank 4) across all Stock groups below — General, Healing, Buff/Nerf, Reduction, and Negate. Continuous versions must be declared active to work. Gear-triggered versions activate on 4-6.",
+    cap: 2, capRank4: 3,
+    groups: true,
+    effects: [
+      { group: "General", name: "The Flash Step Effect", desc: "+9 Stocks. Reduce opponent's Attacks by 1 per successful 4+ Dodge (2 on a 6, max 4). Excludes Tank, Rubberman, Prince's Pride, Force Field, Vision of Lionis, Metal Head, Iron Defense. (QP/PAS)", excludes: ["The Tank Effect", "The Rubberman Effect", "The Prince's Pride Effect", "The Force Field Effect", "The Vision of Lionis Effect", "The Metal Head Effect", "Iron Defense Effect"] },
+      { group: "General", name: "The Hawk Gatling Gun Effect", desc: "+7 Stocks. Per 2 successful NAT 4+ Damage Rolls, inflict 2 extra Stock Damage (max 6); a 1 deals you 1 Stock Damage. Excludes Big Bang, Pride Flare, Melting, Kryptonite, Wind Scar, Toxic, 10 Fold Funeral. (PAS/QP)", excludes: ["The Big Bang Effect", "Pride Flare Effect", "The Melting Effect", "The Kryptonite Effect", "Wind Scar Effect", "The Toxic Effect", "The 10 Fold Funeral Effect"] },
+      { group: "General", name: "Fox Flare Effect", desc: "+8 Stocks. Dodge NAT 4+/5+/6+ forces opponent's roll or 1/1.5/2 Stock Damage respectively. Excludes Ark of Time, Vision, Wreck, One Man Army. (QP/PAS)", excludes: ["Ark of Time Effect", "The Vision Effect", "The Wreck Effect", "One Man Army Effect"] },
+      { group: "General", name: "One Man Army Effect", desc: "+8 Stocks. Block NAT 4+/5+/6+ forces opponent's roll or 1/1.5/2 Stock Damage respectively. Excludes Dermal Armor, Ark of Time, Wreck, Perception, Fox Flare. (QP/PAS)", excludes: ["Dermal Armor Effect", "Ark of Time Effect", "The Wreck Effect", "Perception Effect", "Fox Flare Effect"] },
+      { group: "General", name: "The Cursed Effect", desc: "Reserved — description pending.", stub: true },
+      { group: "General", name: "The Paralyze Effect", desc: "Reserved — description pending.", stub: true },
+      { group: "Healing (Stock)", name: "Barrier Affect", desc: "+10 Stocks. On a 4+, steal 1.5 Stocks per opponent miss (2.5 on a 6; a 1 costs you and the effect 1.5 Stocks each). Max 7.5/round, heals your Base Stock. Excludes Recovery, Tank, Prince's Pride, Rubberman, Force Field, Iron Defense, Shield, Vision of Lionis. (CON)", excludes: ["Recovery Effect", "The Tank Effect", "The Prince's Pride Effect", "The Rubberman Effect", "The Force Field Effect", "Iron Defense Effect", "Shield Affect", "The Vision of Lionis Effect"] },
+      { group: "Healing (Stock)", name: "Shield Affect", desc: "+10 Stocks, regain 2 Stocks per opponent 1-3 Damage Roll. Excludes Invul, Tank, Rubberman, Force Field, Barrier, Iron Defense, Vision of Lionis. (QP)", excludes: ["Invul Effect", "The Tank Effect", "The Rubberman Effect", "The Force Field Effect", "Barrier Affect", "Iron Defense Effect", "The Vision of Lionis Effect"] },
+      { group: "Healing (Stock)", name: "Iron Defense Effect", desc: "+9 Stocks, regain 1 Stock per successful 4+ Block (2 on a 6). Excludes Vision of Lionis. (CON/QP)", excludes: ["The Vision of Lionis Effect"] },
+      { group: "Healing (Stock)", name: "The Vision of Lionis Effect", desc: "+9 Stocks, regain 1 Stock per successful 4+ Dodge (2 on a 6). Excludes Iron Defense. (CON/QP)", excludes: ["Iron Defense Effect"] },
+      { group: "Buff/Nerf (Stock)", name: "The Barbarian Effect", desc: "+7 Stocks. On a 4+, +1 Strength for the Round (on a 6, attacks also do -1 Block); a 1 deals you 2.5 Stock Damage (Critical). Excludes the other 7 Attribute-Stock Effects below. (CON)", excludes: ["The Decoy Effect", "The Mountain Effect", "Grandmaster of Lionis Effect", "Reinforcements Affect", "Puppet Master Affect", "The Ripper Effect", "The Fuhrer Effect"] },
+      { group: "Buff/Nerf (Stock)", name: "The Decoy Effect", desc: "+7 Stocks. On a 4+, +1 Speed for the Round (on a 6, attacks also do -1 Accuracy); a 1 deals you 2.5 Stock Damage (Critical). Excludes the other Attribute-Stock Effects. (CON)", excludes: ["The Barbarian Effect", "The Mountain Effect", "Grandmaster of Lionis Effect", "Reinforcements Affect", "Puppet Master Affect", "The Ripper Effect", "The Fuhrer Effect"] },
+      { group: "Buff/Nerf (Stock)", name: "The Mountain Effect", desc: "+7 Stocks. On a 4+, +1 Toughness for the Round (on a 6, attacks also do -1 Damage); a 1 deals you 2.5 Stock Damage (Critical). Excludes the other Attribute-Stock Effects. (CON)", excludes: ["The Barbarian Effect", "The Decoy Effect", "Grandmaster of Lionis Effect", "Reinforcements Affect", "Puppet Master Affect", "The Ripper Effect", "The Fuhrer Effect"] },
+      { group: "Buff/Nerf (Stock)", name: "Grandmaster of Lionis Effect", desc: "+7 Stocks. On a 4+, +1 Initiative for the Round (on a 6, attacks also do -1 Dodge); a 1 deals you 2.5 Stock Damage (Critical). Excludes the other Attribute-Stock Effects. (CON)", excludes: ["The Barbarian Effect", "The Decoy Effect", "The Mountain Effect", "Reinforcements Affect", "Puppet Master Affect", "The Ripper Effect", "The Fuhrer Effect"] },
+      { group: "Buff/Nerf (Stock)", name: "Reinforcements Affect", desc: "+7 Stocks. On a 4+, +1 Block for the Round; on a 6, +1 Damage per successful NAT Block (max 3). Excludes the other Attribute-Stock Effects. (CON/QP)", excludes: ["The Barbarian Effect", "The Decoy Effect", "The Mountain Effect", "Grandmaster of Lionis Effect", "Puppet Master Affect", "The Ripper Effect", "The Fuhrer Effect"] },
+      { group: "Buff/Nerf (Stock)", name: "Puppet Master Affect", desc: "+7 Stocks. On a 4+, +1 Dodge for the Round; on a 6, +1 Accuracy per successful NAT Dodge (max 3). Excludes the other Attribute-Stock Effects. (CON/QP)", excludes: ["The Barbarian Effect", "The Decoy Effect", "The Mountain Effect", "Grandmaster of Lionis Effect", "Reinforcements Affect", "The Ripper Effect", "The Fuhrer Effect"] },
+      { group: "Buff/Nerf (Stock)", name: "The Ripper Effect", desc: "+7 Stocks. On a 4+, +1 Damage for the Round; on a 6, +1 Accuracy per successful NAT Damage Roll (max 3). Excludes the other Attribute-Stock Effects. (CON)", excludes: ["The Barbarian Effect", "The Decoy Effect", "The Mountain Effect", "Grandmaster of Lionis Effect", "Reinforcements Affect", "Puppet Master Affect", "The Fuhrer Effect"] },
+      { group: "Buff/Nerf (Stock)", name: "The Fuhrer Effect", desc: "+7 Stocks. On a 4+, +1 Accuracy for the Round; on a 6, +1 Damage per successful NAT Hit (max 3). Excludes the other Attribute-Stock Effects. (CON)", excludes: ["The Barbarian Effect", "The Decoy Effect", "The Mountain Effect", "Grandmaster of Lionis Effect", "Reinforcements Affect", "Puppet Master Affect", "The Ripper Effect"] },
+      { group: "Reduction (Stock)", name: "The Tank Effect", desc: "+10 Stocks, reduce opponent Stock Damage by 2 on a 4+ (3 on a 6). Can reduce Critical Damage. Excludes Prince's Pride, Rubberman, Force Field, Just a Scratch. (CON)", excludes: ["The Prince's Pride Effect", "The Rubberman Effect", "The Force Field Effect"] },
+      { group: "Reduction (Stock)", name: "The Force Field Effect", desc: "+10 Stocks, reduce opponent Stock Damage by 2 on a 4+ (3 on a 6). Can reduce Bleed Damage. Excludes Prince's Pride, Rubberman, Tank. (QP)", excludes: ["The Prince's Pride Effect", "The Rubberman Effect", "The Tank Effect"] },
+      { group: "Reduction (Stock)", name: "The Rubberman Effect", desc: "+9 Stocks, reduce opponent Stock Damage rolls by 2 (Attacks & Ultra Damage only). Excludes Tank, Prince's Pride, Force Field. (PAS)", excludes: ["The Tank Effect", "The Prince's Pride Effect", "The Force Field Effect"] },
+      { group: "Reduction (Stock)", name: "The Prince's Pride Effect", desc: "+9 Stocks, reduce opponent Attacks by 1.5 Stock Damage; on a 4+ gain +1 Damage per Roll reduced (max 2). Excludes Tank, Rubberman, Force Field. (CON/PAS)", excludes: ["The Tank Effect", "The Rubberman Effect", "The Force Field Effect"] },
+      { group: "Reduction (Stock)", name: "The Metal Head Effect", desc: "+10 Stocks, reduce opponent Attacks by 1 Stock Damage (2 on a 4+); immune to Bleed. Reduces Attacks, Ultra, and Critical Damage only. Excludes Tank, Rubberman, Prince's Pride, Force Field, Iron Defense, Flash Step, Vision of Lionis. (PAS)", excludes: ["The Tank Effect", "The Rubberman Effect", "The Prince's Pride Effect", "The Force Field Effect", "Iron Defense Effect", "The Flash Step Effect", "The Vision of Lionis Effect"] },
+      { group: "Negate (Stock)", name: "The King of Xing Effect", desc: "+8 Stocks. On a 4+ cancel an opponent's Signature for the Round (also next round on a 6); a 1 deals you 3 Stock Damage. 1 attempt/turn, 1 Signature at a time. Excludes other King effects and any other disable/negate effect. (CON)", excludes: ["King of the 7 Seas Alliance Effect", "The King of the Beasts Effect", "The King of Emerald Palace Effect"] },
+      { group: "Negate (Stock)", name: "King of the 7 Seas Alliance Effect", desc: "+8 Stocks. On a 4+ cancel 1 Passive Base Effect for the Round (also next round on a 6); a 1 deals you 3 Stock Damage (not reducible). 1 attempt/turn, 1 at a time. Excludes other King effects and any other disable/negate effect. (CON)", excludes: ["The King of Xing Effect", "The King of the Beasts Effect", "The King of Emerald Palace Effect"] },
+      { group: "Negate (Stock)", name: "The King of the Beasts Effect", desc: "+8 Stocks. On a 4+ cancel 1 Continuous Base Effect for the Round (also next round on a 6); a 1 deals you 2 Stock Damage (not reducible). 1 attempt/turn, 1 at a time. Excludes other King effects and any other disable/negate effect. (QP)", excludes: ["The King of Xing Effect", "King of the 7 Seas Alliance Effect", "The King of Emerald Palace Effect"] },
+      { group: "Negate (Stock)", name: "The King of Emerald Palace Effect", desc: "+8 Stocks. On a 4+ cancel 1 Quick-Play Base Effect for the Round (also next round on a 6); a 1 deals you 3 Stock Damage (not reducible). 1 attempt/turn, 1 at a time. Excludes other King effects and any other disable/negate effect. (PAS)", excludes: ["The King of Xing Effect", "King of the 7 Seas Alliance Effect", "The King of the Beasts Effect"] },
+      { group: "Negate (Stock)", name: "The Cyttorak Affect", desc: "Reserved — description pending.", stub: true },
+      { group: "Negate (Stock)", name: "The Majin Affect", desc: "Reserved — description pending.", stub: true },
+      { group: "Negate (Stock)", name: "The Berserk Effect", desc: "Reserved — description pending.", stub: true },
+      { group: "Negate (Stock)", name: "The Logia Affect", desc: "Reserved — description pending.", stub: true },
+    ],
   },
   {
-    key:'accuracy', label:'Accuracy Base Effect', max:(r)=>RANK_INFO[r].effSlotMax,
-    items:[
-      {id:'acc_solarflare', name:'The Solar Flare Effect', tag:'CON', text:"Forces the opponent to hit you on NAT 4+ (then NAT 6), or 1 stock damage on a 1. Unaffected by Ultra Damage.", excludes:['acc_godseye','dmg_divinethousandcuts']},
-      {id:'acc_darkknight', name:'The Dark Knight Effect', tag:'QP', text:"After denying 3 offensive rolls with NAT dodge/block, reduce the opponent's Speed by 1 for 2 rounds on a 4+.", excludes:['dodge_crush','acc_godseye','dmg_tornadoofterror']},
-      {id:'acc_godseye', name:"The God's Eye Effect", tag:'QP', text:"After the opponent fails 3 defensive rolls against your NAT damage/accuracy, reduce their Speed by 1 for 2 rounds on a 4+.", excludes:['dmg_tornadoofterror','dodge_crush','blk_armorpenetrating']},
-      {id:'acc_quickclaw', name:'The Quick Claw Effect', tag:'CON', text:"-2 Accuracy to the opponent for 1 round on a 4+ damage/accuracy roll; extends per successful roll (max 3)."},
-      {id:'acc_jumper', name:'The Jumper Effect', tag:'CON', text:"+2 Accuracy to yourself for 1 round on a 4+ damage/accuracy roll; extends per successful roll (max 3)."},
-      {id:'acc_blinding', name:'The Blinding Effect', tag:'QP', text:"-2 Accuracy to the opponent for 1 round on a 4+, if they roll 4/5/6 damage/accuracy."},
-      {id:'acc_acceleration', name:'The Acceleration Effect', tag:'QP', text:"+2 Accuracy to yourself for 1 round on a 4+, if the opponent rolls 4/5/6 damage/accuracy."},
-      {id:'acc_nightmare', name:'The Nightmare Effect', tag:'QP', text:"-2 Accuracy to the opponent for 1 round on a 4+ if they roll 1/2/3 damage/accuracy; extends on each failed roll (max 3)."},
-      {id:'acc_whirlwindslashing', name:'The Whirlwind Slashing Effect', tag:'QP', text:"+2 Accuracy to yourself for 1 round on a 4+ when the opponent rolls 1/2/3 damage/accuracy; extends on each failed roll (max 3)."},
-      {id:'acc_blackout', name:'The Blackout Effect', tag:'CON', text:"Gain 7 stocks; every successful 4+ accuracy roll this turn adds bonus stock damage at round's end.", excludes:['dmg_windscar','acc_10foldfuneral','acc_prideflare','acc_matrix','acc_paralyzer']},
-      {id:'acc_prideflare', name:'Pride Flare Effect', tag:'PAS', text:"Every 2 successful 4+ accuracy rolls immediately inflicts +1 stock damage (max 3).", excludes:['acc_matrix','acc_paralyzer','acc_blackout','acc_10foldfuneral','dmg_warhammer','dmg_bigbang']},
-      {id:'acc_matrix', name:'The Matrix Effect', tag:'QP', text:"Every 2 successful 4+ accuracy rolls, on a 4+, remove one of the opponent's next attacks (max 2).", excludes:['acc_paralyzer','acc_blackout','acc_prideflare','dmg_melting','stk_tank','stk_forcefield','stk_rubberman']},
-      {id:'acc_paralyzer', name:'The Paralyzer Effect', tag:'CON', text:"After 2 successful 4+ accuracy rolls, on a 4+ turn your 3rd roll into an uncounterable Ultra Damage roll (max 2/turn).", excludes:['dmg_warhammer','acc_10foldfuneral','acc_blackout','acc_prideflare','acc_matrix','dmg_kryptonite']},
-      {id:'acc_lockdown', name:'The Lock Down Effect', tag:'CON', text:"Gain 8 stocks; every 4+ hitting roll this turn grants a scaling bonus next round (2=+1 attack, 3=+3 attacks, 4=opponent's first attack forced physical or projectile).", excludes:['acc_blackout','acc_prideflare','acc_matrix','acc_paralyzer','acc_10foldfuneral','acc_seriousseries','dmg_brutal']},
-      {id:'acc_10foldfuneral', name:'The 10 Fold Funeral Effect', tag:'CON', text:"Gain 7 stocks; every 4+ hitting roll this turn grants a scaling bonus next round (2=+2 Accuracy, 3=+2 attacks, 4=+1 stock damage on those attacks).", excludes:['dmg_warhammer','dmg_bigbang','acc_paralyzer','dmg_kryptonite','acc_prideflare']},
-      {id:'acc_seriousseries', name:'The Serious Series Effect', tag:'PAS', text:"Every 4+ accuracy roll grants an additional attack roll (max 3); must still roll to hit and damage.", excludes:['acc_10foldfuneral','dmg_toxic']},
-    ]
+    key: "healing",
+    label: "Healing Base Effects",
+    tagline: "Max 1 ability. Applies only to your Base Stock (and its Secondary Effect). Usable with D8/D10/D12 Gear. Mutually exclusive with Reduction Base Effects.",
+    cap: 1, capRank4: 1,
+    mutexWith: ["reduction"],
+    effects: [
+      { name: "Recovery Effect", desc: "Regain 1.5 Stocks at Round's end; on a 4+ steal 1.5 from the opponent too (3 on a 6). Max 4.5 Stocks. (CON/PAS)" },
+      { name: "Heal Affect", desc: "Regain 1.5 Stocks at Round's end; +2 more on a 4+, +4 more on a 6. Max 7 Stocks. (CON/PAS)" },
+      { name: "Just a Scratch Effect", desc: "Regain 1.5 Stocks at Round's end; on a 4+ reduce opponent's Stock Damage by 1 (2 on a 6). Max 6 reduction/round. (CON/QP)" },
+      { name: "Fighting Spirit Effect", desc: "Regain 1.5 Stocks/round, +1.5 more per 4+ Damage Roll (+3 on a NAT 6). Max 9/round. Secondary Effect can heal Critical Damage. (CON/PAS)" },
+      { name: "Invul Effect", desc: "Regain 1.5 Stocks/round, +2 more per opponent 1-3 Damage Roll. Max 9/round. Secondary Effect can heal Critical Damage. (CON/QP)" },
+    ],
   },
   {
-    key:'stock', label:'Stock Base Effect', max:(r)=>RANK_INFO[r].effSlotMax,
-    items:[
-      {id:'stk_barrier', name:'Barrier Effect', tag:'CON', text:"Gain 10 stocks; on a 4+ steal 1 stock from the opponent (2 on a 6) to heal your Base Stock (max 2).", excludes:['heal_recovery','stk_tank','stk_princespride','stk_rubberman','stk_forcefield','stk_irondefense','stk_shield','stk_visionoflionis']},
-      {id:'stk_shield', name:'Shield Effect', tag:'QP', text:"Gain 10 stocks; regain 2 stocks for every opponent 1/2/3 damage roll. Immune to Bleed.", excludes:['heal_invul','stk_tank','stk_rubberman','stk_forcefield','stk_barrier','stk_irondefense','stk_visionoflionis']},
-      {id:'stk_irondefense', name:'Iron Defense Effect', tag:'CON/QP', text:"Gain 9 stocks; regain 1 stock per successful 4+ block (2 on a 6).", excludes:['stk_visionoflionis']},
-      {id:'stk_visionoflionis', name:'The Vision of Lionis Effect', tag:'CON/QP', text:"Gain 9 stocks; regain 1 stock per successful 4+ dodge (2 on a 6).", excludes:['stk_irondefense']},
-      {id:'stk_hawkgatlinggun', name:'The Hawk Gatling Gun Effect', tag:'PAS/QP', text:"Gain 7 stocks; every 2 successful NAT 4+ damage rolls inflicts +2 stock damage (max 6), but a 1 costs you 1 stock damage.", excludes:['dmg_bigbang','acc_prideflare','dmg_melting','dmg_kryptonite','dmg_windscar','dmg_toxic','acc_10foldfuneral']},
-      {id:'stk_cursed', name:'The Cursed Effect', tag:'CON/QP', text:"Gain 8 stocks; on a 4+ damage roll force the opponent's first attack physical or projectile (first 2 on a 6). Max 3.", excludes:['dmg_brutal','stk_paralyze','acc_lockdown']},
-      {id:'stk_paralyze', name:'The Paralyze Effect', tag:'CON/QP', text:"Gain 8 stocks; on a 4+ accuracy roll force the opponent's first attack physical or projectile (first 2 on a 6 damage roll). Max 3.", excludes:['dmg_brutal','stk_cursed','acc_lockdown']},
-      {id:'stk_foxflare', name:'Fox Flare Effect', tag:'QP/PAS', text:"Gain 8 stocks; on a NAT 4+/5+ dodge, the opponent must roll NAT 4+ or suffer 1/1.5 stock damage (2 on a 6 dodge).", excludes:['dodge_arkoftime','dodge_vision','blk_wreck','stk_onemanarmy']},
-      {id:'stk_onemanarmy', name:'One Man Army Effect', tag:'QP/PAS', text:"Gain 8 stocks; on a NAT 4+/5+ block, the opponent must roll NAT 4+ or suffer 1/1.5 stock damage (2 on a 6 block).", excludes:['blk_dermalarmor','dodge_arkoftime','blk_wreck','blk_perception','stk_foxflare']},
-      {id:'stk_barbarian', name:'The Barbarian Effect', tag:'CON', text:"Gain 7 stocks; on 4+ damage rolls, gain +1 Strength per successful roll for the next round (max 4).", excludes:['stk_grandmasteroflionis','stk_decoy','stk_mountain','stk_reinforcements','stk_puppetmaster','stk_ripper','stk_fuhrer']},
-      {id:'stk_decoy', name:'The Decoy Effect', tag:'CON', text:"Gain 7 stocks; on 4+ damage rolls, gain +1 Speed per successful roll for the next round (max 4).", excludes:['stk_barbarian','stk_grandmasteroflionis','stk_mountain','stk_reinforcements','stk_puppetmaster','stk_ripper','stk_fuhrer']},
-      {id:'stk_mountain', name:'The Mountain Effect', tag:'CON', text:"Gain 7 stocks; on 4+ damage rolls, gain +1 Toughness per successful roll for the next round (max 4).", excludes:['stk_barbarian','stk_decoy','stk_grandmasteroflionis','stk_reinforcements','stk_puppetmaster','stk_ripper','stk_fuhrer']},
-      {id:'stk_grandmasteroflionis', name:'Grandmaster of Lionis Effect', tag:'CON', text:"Gain 7 stocks; on 4+ damage rolls, gain +1 Initiative per successful roll for the next round (max 4).", excludes:['stk_barbarian','stk_decoy','stk_mountain','stk_reinforcements','stk_puppetmaster','stk_ripper','stk_fuhrer']},
-      {id:'stk_kingofxing', name:'The King of Xing Effect', tag:'CON', text:"Gain 8 stocks; on a 4+ cancel an opponent Signature for 1 round (2 on a 6). A 1 costs you 1 stock damage.", excludes:['stk_kingofthesevenseasalliance','stk_kingofthebeasts']},
-      {id:'stk_kingofthesevenseasalliance', name:'King of the 7 Seas Alliance Effect', tag:'PAS', text:"Gain 8 stocks; on a 4+ cancel an opponent Base Effect for 1 round (2 on a 6). A 1 costs you 1 stock damage, unreducible.", excludes:['stk_kingofxing','stk_kingofthebeasts']},
-      {id:'stk_kingofthebeasts', name:'The King of the Beasts Effect', tag:'QP', text:"Gain 8 stocks; on a 4+ halve an opponent Finisher's damage (cancel it on a 6). A 1 costs you 1 stock damage.", excludes:['stk_kingofxing','stk_kingofthesevenseasalliance']},
-      {id:'stk_reinforcements', name:'Reinforcements Effect', tag:'QP', text:"Gain 7 stocks; on a 4+, each opponent 1/2/3 damage roll inflicts -1 Strength for that many following rounds (max 4).", excludes:['stk_barbarian','stk_decoy','stk_mountain','stk_grandmasteroflionis','stk_puppetmaster','stk_ripper','stk_fuhrer']},
-      {id:'stk_puppetmaster', name:'Puppet Master Effect', tag:'QP', text:"Gain 7 stocks; on a 4+, each opponent 1/2/3 damage roll inflicts -1 Speed for that many following rounds (max 4).", excludes:['stk_barbarian','stk_decoy','stk_mountain','stk_reinforcements','stk_grandmasteroflionis','stk_ripper','stk_fuhrer']},
-      {id:'stk_ripper', name:'The Ripper Effect', tag:'QP', text:"Gain 7 stocks; on a 4+, each opponent 1/2/3 damage roll inflicts -1 Toughness for that many following rounds (max 4).", excludes:['stk_barbarian','stk_decoy','stk_mountain','stk_reinforcements','stk_puppetmaster','stk_fuhrer','stk_grandmasteroflionis']},
-      {id:'stk_fuhrer', name:'The Fuhrer Effect', tag:'QP', text:"Gain 7 stocks; on a 4+, each opponent 1/2/3 damage roll inflicts -1 Initiative for that many following rounds (max 4).", excludes:['stk_barbarian','stk_decoy','stk_mountain','stk_reinforcements','stk_puppetmaster','stk_ripper','stk_grandmasteroflionis']},
-      {id:'stk_tank', name:'The Tank Effect', tag:'CON', text:"Gain 10 stocks; reduce opponent stock damage by 1 on a 4+ (2 on a 6). Can reduce Critical damage.", excludes:['stk_princespride','stk_rubberman','stk_forcefield']},
-      {id:'stk_forcefield', name:'The Force Field Effect', tag:'QP', text:"Gain 10 stocks; reduce opponent stock damage by 1 on a 4+ (2 on a 6). Can reduce Bleed damage.", excludes:['stk_princespride','stk_rubberman','stk_tank']},
-      {id:'stk_rubberman', name:'The Rubberman Effect', tag:'PAS', text:"Gain 9 stocks; reduce the opponent's stock damage rolls by 1 (only affects attacks and Ultra Damage).", excludes:['stk_tank','stk_princespride','stk_forcefield']},
-      {id:'stk_princespride', name:"The Prince's Pride Effect", tag:'PAS', text:"Gain 9 stocks; reduce opponent stock damage by 3 every round, +1 on a 4+ (+2 on a 6).", excludes:['stk_tank','stk_rubberman','stk_forcefield']},
-      {id:'stk_metalhead', name:'The Metal Head Effect', tag:'QP/PAS', text:"Gain 9 stocks; reduce 1 stock damage per successful 4+ block (2 on a 6). Only affects attacks and Critical damage.", excludes:['stk_tank','stk_rubberman','stk_princespride','stk_forcefield','stk_irondefense','stk_flashstep','stk_visionoflionis']},
-      {id:'stk_flashstep', name:'The Flash Step Effect', tag:'QP/PAS', text:"Gain 9 stocks; reduce 1 stock damage per successful 4+ dodge (2 on a 6). Only affects attacks and Critical damage.", excludes:['stk_tank','stk_rubberman','stk_princespride','stk_forcefield','stk_visionoflionis','stk_metalhead','stk_irondefense']},
-      {id:'stk_cyttorak', name:'The Cyttorak Effect', tag:'QP', text:"Blessed with immunity; gain 7 stocks and cancel one Continuous effect used against you this round, on a 4+."},
-      {id:'stk_majin', name:'The Majin Effect', tag:'QP', text:"Boosted physicality; gain 7 stocks and cancel one Quick-Play effect the opponent uses on themself this round, on a 4+."},
-      {id:'stk_berserk', name:'The Berserk Effect', tag:'CON', text:"Enraged; gain 7 stocks and cancel one Continuous effect the opponent uses on themself this round, on a 4+."},
-      {id:'stk_logia', name:'The Logia Effect', tag:'CON', text:"Intangible to physical attacks; gain 7 stocks and cancel one Quick-Play effect used against you this round, on a 4+."},
-    ]
+    key: "reduction",
+    label: "Reduction Base Effects",
+    tagline: "Max 1 ability. Applies only to your Base Stock (and its Secondary Effect). Must reduce each roll. Usable with D8/D10/D12 Gear. Mutually exclusive with Healing Base Effects.",
+    cap: 1, capRank4: 1,
+    mutexWith: ["healing"],
+    effects: [
+      { name: "The Fortify/Safeguard Effect", desc: "On a 4+ reduce 1.5 Stocks of incoming Damage each round; on a 4+ also heal 1.5 (3 on a 6) to Base Stock at Round's end. Secondary Effect can heal Criticals. (CON/QP)" },
+      { name: "The Hollowfication Effect", desc: "On a 4+ reduce 1.5 Stocks of incoming Damage each round; +2 more on a 4+, +4 more on a 6. Max 7/round. (CON/QP)" },
+      { name: "The Indestructible Effect", desc: "On a 4+ reduce 1.5 Stocks of incoming Damage each round; on a 4+ also reduce opponent's Damage Roll by 1 (2 on a 6). Secondary Effect can reduce Criticals. (CON/QP)" },
+      { name: "The Made of Rage Effect", desc: "On a 4+ reduce 1.5 Stocks of incoming Damage each round, +1.5 more per 4+ Damage Roll you inflict (+3 on a NAT 6). Max 9/round. Secondary Effect can reduce Criticals. (CON/QP)" },
+      { name: "The Odin Force Effect", desc: "On a 4+ reduce 1.5 Stocks of incoming Damage each round, +1.5 more per opponent 1-3 Damage Roll. Max 9/round. Secondary Effect can reduce Criticals. (CON/PAS)" },
+    ],
   },
   {
-    key:'healing', label:'Healing Base Effect', max:1, excludesCategory:'stockReduction',
-    note:'Only one Healing effect; its secondary effect applies to Base Stock only. Cannot be combined with a Stock Reduction effect.',
-    items:[
-      {id:'heal_recovery', name:'Recovery Effect', tag:'CON/PAS', text:"Regain 3 Base Stocks each round; on a 4+ also drain 1.5 stocks from the opponent (3 on a 6), max 6.", excludes:['stk_barrier']},
-      {id:'heal_heal', name:'Heal Effect', tag:'CON/PAS', text:"Regain 3 Base Stocks each round, +2 on a 4+, +4 more on a 6 (max 7)."},
-      {id:'heal_justascratch', name:'Just a Scratch Effect', tag:'CON/QP', text:"Regain 3 stocks each round; on a 4+ reduce the opponent's stock damage roll by 1 (2 on a 6), max 6/round."},
-      {id:'heal_fightingspirit', name:'Fighting Spirit Effect', tag:'CON/PAS', text:"Regain 3 stocks each round, +1.5 per 4+ damage roll dealt (+3 on a NAT 6), max 9/round. Can heal Critical damage via the secondary effect only."},
-      {id:'heal_invul', name:'Invul Effect', tag:'CON/QP', text:"Regain 3 stocks each round, +2 for each opponent 1/2/3 damage roll (max 9/round). Can heal Critical damage via the secondary effect only.", excludes:['stk_shield']},
-    ]
-  },
-  {
-    key:'stockReduction', label:'Stock Reduction Base Effect', max:1, excludesCategory:'healing',
-    note:'Only one Stock Reduction effect; its secondary effect applies to Base Stock only. Cannot be combined with a Healing effect.',
-    items:[
-      {id:'sr_fortify', name:'The Fortify/Safeguard Effect', tag:'CON/QP', text:"Reduce opponent stock damage by 3 each round; on a 4+ heal 1.5 stocks to yourself (3 on a 6). Secondary effect can heal Criticals."},
-      {id:'sr_hollowfication', name:'The Hollowfication Effect', tag:'CON/QP', text:"Reduce opponent stock damage by 3 each round, +2 on a 4+, +4 more on a 6 (max 7)."},
-      {id:'sr_indestructible', name:'The Indestructible Effect', tag:'CON/QP', text:"Reduce opponent stock damage by 3 each round; on a 4+ also reduce their damage roll by 1 (2 on a 6), max 8/round. Secondary can reduce Criticals."},
-      {id:'sr_madeofrage', name:'The Made of Rage Effect', tag:'CON/QP', text:"Reduce opponent stock damage by 3 each round, +1.5 per 4+ damage roll you inflict (+3 on a NAT 6), max 9/round. Secondary can reduce Criticals."},
-      {id:'sr_odinforce', name:'The Odin Force Effect', tag:'CON/PAS', text:"Reduce opponent stock damage by 3 each round, +1.5 for each opponent 1/2/3 damage roll (max 9/round). Secondary can reduce Criticals."},
-    ]
-  },
-  {
-    key:'revive', label:'Revive Stock Base Effect', max:1,
-    items:[
-      {id:'rev_res', name:'Res Effect', tag:'CON/PAS', text:"On a 4+, revive with half Base Stock (full on a 6). Usable twice, but only once if you roll a 6."},
-      {id:'rev_regen', name:'Regen Effect', tag:'CON/PAS', text:"On a 4+, revive with half Base Stock. Usable three times."},
-      {id:'rev_reconstruction', name:'Reconstruction Effect', tag:'CON/PAS', text:"On a 4+, revive with half Base Stock and heal 3.5 stocks each round for 2 rounds after. Usable twice."},
-    ]
+    key: "revive",
+    label: "Revive Stock Base Effects",
+    tagline: "Max 1 ability. Usable with D8/D10/D12 Gear.",
+    cap: 1, capRank4: 1,
+    effects: [
+      { name: "Res Effect", desc: "On a 4+ revive with Half Base Stock (Full on a 6). Usable twice (once if you roll a 6). (CON/PAS)" },
+      { name: "Regen Effect", desc: "On a 4+ revive with Half Base Stock. Usable three times. (CON/PAS)" },
+      { name: "Reconstruction Effect", desc: "On a 4+ revive with Half Base Stock, then regen 3.5 Stocks/round for the next 2 rounds. Usable twice. (CON/PAS)" },
+    ],
   },
 ];
 
-/* ============================= STATE ============================= */
-let characters = {};   // id -> character object
-let order = [];        // roster order
-let currentId = null;
+// Core Attributes are absolute Levels (0-5) compared against an opponent's via the Attribute Charts.
+// Roll Modifiers are flat +/- bonuses layered on top from Base Effects, Signatures, and Gear.
+const CORE_ATTRS = ["Strength", "Toughness", "Speed", "Initiative"];
+const ROLL_MODS = ["Accuracy", "Damage", "Block", "Dodge"];
+const ATTRIBUTES = [...CORE_ATTRS, ...ROLL_MODS];
 
-function blankCharacter(){
-  return {
-    id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-    name:'', universe: UNIVERSES[0], rank:1,
-    attrs:{strength:0, toughness:0, speed:0, initiative:0},
-    picks:{} // categoryKey -> [effectId,...]
+/* ============================================================
+   RULES REFERENCE DATA (Combat Manual)
+   ============================================================ */
+
+const ACTION_ROLL_RULE = "4+ to perform an Action (in or out of story). Performance Rolls are not Accuracy Rolls.";
+
+const HONORABLE_MENTIONS = [
+  "Max 12 Attacks a Round per Character, if able.",
+  "Max 12 Attacks a Turn per Character when reduced (must reduce each roll).",
+  "Max 9 Stocks of damage reduced a Turn per Character (must reduce each roll).",
+  "Max 9 Stocks healed/recovered a Turn per Character.",
+  "No Healing Base Effect can be taken with any type of Stock Reduction Base Effect.",
+  "No Counter Base Effect can be taken with a Cancel Out/Negate Base Effect (except Enlightened Variants).",
+  "Buffs/Nerfs are capped at 4.",
+];
+
+const ROLL_RULES = [
+  "All 1 Rolls are absolute and cannot be altered unless you have a Re-roll Effect.",
+  "All 1 Defensive Rolls automatically fail.",
+  "All NAT 6 Rolls are final.",
+  "Any 1-roll CON or QP Base Effect can only be activated once per Turn.",
+  "Debilitated Effect: 3 NAT 1 Damage Rolls (or 3 NAT 1 Accuracy Rolls) against the same target in one turn deals that target an immediate, unreducible D6 Damage Roll.",
+];
+
+const CRITICAL_RULES = [
+  "Suffering three NAT 6 Damage Rolls/Criticals in a turn deals an additional D3 Damage: 1-2 = −2 Stocks, 3-4 = −4 Stocks, 5-6 = −6 Stocks. Cannot be reduced or healed.",
+  "Critical Hit: a 6 Damage Roll deals 3 Stocks Damage. Cannot be reduced, and the loss cannot be healed/recovered.",
+  "6 Damage Rolls can still be altered by Attributes and still count as NAT Rolls.",
+];
+
+const BLEED_RULES = [
+  "After failing 3 Defensive Rolls (Blocks, Dodges, or Counters) in a turn, suffer a D6 Damage Roll for 3 Rounds: 1-2 = −1 Stock, 3-4 = −1.5 Stocks, 5-6 = −2 Stocks.",
+  "Rolling the 1-2 result twice in a row cancels the Bleed Effect.",
+  "Bleed Damage cannot be reduced.",
+];
+
+const INTERVENING_RULES = [
+  "Any player may take a hit for another Player/Teammate/Enemy on a 4+.",
+  "4+ = take full damage (cannot be reduced, ignores the User's Abilities/Base Effects).",
+  "5+ = may Block or Dodge on a 4+.",
+  "6+ = take no damage.",
+  "No Countering while Intervening.",
+  "Half Stocks (e.g. 25/50) = −1 to the Intervening Roll. Quarter Stocks (e.g. 5/20) = −2 to the Intervening Roll.",
+];
+
+const DISASTER_TABLE = [
+  { strength: 5, criticals: 3 },
+  { strength: 4, criticals: 4 },
+  { strength: 3, criticals: 5 },
+  { strength: 2, criticals: 6 },
+];
+
+const DISASTER_TEXT =
+  "Landing the listed number of Critical Attacks (based on your Strength) collapses the Setting. Every other Character present must pass a Defensive Roll once per turn for 4 turns/next Round; anyone who joins mid-effect suffers it too for the remaining duration. Opponents who suffer Stock Damage within the first 2 Rounds are also immediately inflicted with Bleed. Uncounterable — must be Blocked or Dodged on a 4+.";
+
+const DAMAGE_CHART_D6 = [
+  { roll: "1", dmg: 0 },
+  { roll: "2", dmg: 0.5 },
+  { roll: "3", dmg: 0.5 },
+  { roll: "4", dmg: 1 },
+  { roll: "5", dmg: 2 },
+  { roll: "6", dmg: 3 },
+];
+
+const ULTRA_DAMAGE_CHART_D12 = [
+  { roll: "1", dmg: 0 },
+  { roll: "2-3", dmg: 0.5 },
+  { roll: "4", dmg: 1 },
+  { roll: "5", dmg: 2 },
+  { roll: "6", dmg: 3 },
+  { roll: "7", dmg: 3.5 },
+  { roll: "8", dmg: 4 },
+  { roll: "9", dmg: 4.5 },
+  { roll: "10", dmg: 5 },
+  { roll: "11", dmg: 5.5 },
+  { roll: "12", dmg: 6 },
+];
+
+const ULTRA_DAMAGE_NOTE =
+  "Ultra Damage Effect: merge 4 Attacks into 1 Attack that can't be Buffed or Nerfed (bypasses all Attributes, buffs, and nerfs). Max 3 per Round. Base Effects don't work with Ultra Damage. Specialists merge only 3 Attacks instead of 4, and use the Ultra Damage Chart whenever applying Weapon Damage.";
+
+const ATTRIBUTE_RULES = [
+  "No Attribute can be more than 1 above a Character's Original Rank.",
+  "Base Effects cannot add or subtract more than 2 to/from any single Attribute.",
+  "Rank 5 Attributes can't be reduced except by another Rank 5 Character's opposing Rank 5 Attribute.",
+  "Only the Character who altered an opponent's Attribute treats it as altered when attacking — everyone else applies damage using the opponent's original Attribute.",
+  "Characters can't lower an opponent's Attribute that is 2+ Ranks/Levels higher than their own in that Attribute.",
+];
+
+const BASE_EFFECT_TYPES = [
+  {
+    tag: "PAS",
+    label: "Passive",
+    desc: "Always in play, no activation needed (max 3). A Passive Stock Effect loses its ability once that Base Effect's Stocks hit 0 — otherwise it's always active.",
+  },
+  {
+    tag: "CON",
+    label: "Continuous",
+    desc: "Activates once the User performs an Action (max 3). Some need no activation roll and function like Passives but still count as Continuous. Continuous Stock Effects must be in front/active to work and disable once Stocks hit 0. Multiple Continuous Effects can run at once but not on the same Attack — except one Continuous Effect can pair with one Continuous Stock Effect on the same Attack. Only 1 Continuous Effect with Stocks can activate per Attack.",
+  },
+  {
+    tag: "QP",
+    label: "Quick-Play",
+    desc: "Activates after the opponent performs an Action (max 3). Only one 1-2-3 and one 4-5-6 Quick-Play Effect that alters/buffs/nerfs a given Attribute or Roll (Str, Tou, Spe, In, Dam, Acc, Blo, Dod) may be activated each, once per turn. Quick-Play Stock Effects are always active; Stock Reduction Effects only work while in front/center stage.",
+  },
+];
+
+const UNIVERSAL_RANK_CHART = [
+  { rank: 1, req: "Start", text: "1st, 2nd & 3rd Base Effect, 6 Base Stocks, +2 Attributes, Common Weaponry/Equipment" },
+  { rank: 2, req: "7th Victory", text: "4th Base Effect" },
+  { rank: 2, req: "14th Victory", text: "5th Base Effect, 8 Base Stocks, Rare Weaponry/Equipment, +2 Attributes" },
+  { rank: 3, req: "21st Victory", text: "6th Base Effect" },
+  { rank: 3, req: "28th Victory", text: "10 Base Stocks, Legendary/Living Relic Weaponry/Equipment, +2 Attributes" },
+  { rank: 4, req: "35th Victory", text: "12 Base Stocks" },
+  { rank: 4, req: "42nd Victory", text: "+2 Attributes, Legendary/Living Relic gains a Signature" },
+  { rank: 5, req: "60th Victory", text: "Choose ONE: Signature on a Base Effect (CON or PAS); an additional Subclass from the same Pool; an additional Signature on Weaponry/Equipment; or +2 Attributes and 20 Base Stocks." },
+];
+
+const TRANSFORMATION_TIERS = [
+  { tier: "Lv 1", attr: "+1 Attribute", forms: "Common Forms", rounds: 6, stocks: 4, examples: "Werewolf, Ghoul, Elemental, Mutation X" },
+  { tier: "Lv 2", attr: "+2 Attributes", forms: "Rare Forms", rounds: 9, stocks: 6, examples: "SSJ, Seven Gates, Djinn Equip, Zoan Form" },
+  { tier: "Lv 3", attr: "+3, or +2/-1, or +1/-2 Attributes", forms: "Legendary & Living Forms", rounds: 12, stocks: 8, examples: "LSSJ, 8 Inner Gates, Tailed Beast, Hulk Form, Titan Shifter" },
+];
+const TRANSFORMATION_NOTE =
+  "On a 1 Damage Roll while Transformed (Lv 1/2), suffer an immediate, unreducible 1 Stock Damage. At Lv 3 the User may also choose to lower 1 Attribute. Overload Effect: failing 6 Rolls in the same turn (yours or the opponent's) inflicts an immediate D6 Damage Roll and loses Transformed form for 2 Rounds/next Round.";
+
+const GEAR_TIERS = [
+  { key: "common", die: "D8", label: "Common", rounds: 4, failToDisarm: 3, disarmRounds: 1, bonus: "±1 to Damage, Accuracy, Block, and/or Dodge", capNonSpecialist: 4, example: "Guns, Swords, 3D Maneuver Gear, Utility Belt" },
+  { key: "rare", die: "D10", label: "Rare", rounds: 8, failToDisarm: 4, disarmRounds: 2, bonus: "±2 to Damage, Accuracy, Block, Dodge, or a Base Effect", capNonSpecialist: 1, example: "Lightsabers, Vibranium Shield, Grimoire, Geass" },
+  { key: "legendary", die: "D12", label: "Legendary / Living Relic", rounds: null, failToDisarm: 5, disarmRounds: 3, bonus: "±2 (max 2) to Damage, Accuracy, Block, Dodge, or a Base Effect", capNonSpecialist: 1, example: "Excalibur, Destroyer Armor, Tailed Beast, Zanpakuto, Omnitrix", signature: true },
+];
+
+const GENERAL_GEAR_RULES = [
+  "Gear rolls (D8/D10/D12) can apply to Revive, Counters, Stock Reduction, Healing, Damage, Accuracy, Block, and/or Dodge Rolls.",
+  "Equipment options: Revive, Stock Reduction, Healing, Cancel Out/Negations, Counters, Block and/or Dodge.",
+  "Weaponry options: Damage, Number of Attacks, Cancel Out/Negations, Counters, and/or Accuracy.",
+  "6 failed rolls with a piece of Gear (or suffering 6 Damage Rolls) in the same Round breaks it for the rest of the fight.",
+  "Non-Specialists can carry a max of 2 pieces of Gear at a time, and must declare which 2 types they're using at the start of their turn, every round.",
+  "Rearm on a 5+ (no attack the turn you rearm).",
+];
+
+function clampNum(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
+// Damage/Accuracy modifiers are capped at a ±2 spread; beyond that the matchup is "X" —
+// governed instead by the Strength-Doubles-Toughness / Toughness-Doubles-Strength special rules.
+function damageMod(str, tou) {
+  const d = str - tou;
+  return Math.abs(d) <= 2 ? d : null;
+}
+function accuracyMod(spe, init) {
+  const d = spe - init;
+  return Math.abs(d) <= 2 ? d : null;
+}
+// Block/Dodge modifiers run the full spread with no cap.
+function blockMod(str, tou) {
+  return tou - str;
+}
+function dodgeMod(spe, init) {
+  return init - spe;
+}
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+
+function hashColor(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
+  return h;
+}
+
+function initials(name) {
+  if (!name) return "??";
+  const parts = name.trim().split(/\s+/);
+  return parts.slice(0, 2).map((p) => p[0]?.toUpperCase() || "").join("");
+}
+
+/* ============================================================
+   RADAR CHART
+   ============================================================ */
+function RadarChart({ values, accent }) {
+  const size = 220;
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = 82;
+  const n = ATTRIBUTES.length;
+  const maxVal = 8;
+
+  const pointFor = (i, val) => {
+    const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+    const dist = (Math.max(0, Math.min(maxVal, val + maxVal / 2)) / maxVal) * r;
+    return [cx + dist * Math.cos(angle), cy + dist * Math.sin(angle)];
   };
-}
-let draft = blankCharacter();
 
-/* ============================= STORAGE ============================= */
-async function loadRoster(){
-  try{
-    const idx = await window.storage.get('char-index');
-    order = idx ? JSON.parse(idx.value) : [];
-  }catch(e){ order = []; }
-  characters = {};
-  for(const id of order){
-    try{
-      const rec = await window.storage.get('char:'+id);
-      if(rec) characters[id] = JSON.parse(rec.value);
-    }catch(e){ /* missing, skip */ }
+  const ringPoints = (frac) =>
+    ATTRIBUTES.map((_, i) => {
+      const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+      return `${cx + r * frac * Math.cos(angle)},${cy + r * frac * Math.sin(angle)}`;
+    }).join(" ");
+
+  const dataPoints = ATTRIBUTES.map((a, i) => pointFor(i, values[a] || 0)).map((p) => p.join(",")).join(" ");
+
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} width="100%" style={{ maxWidth: 260 }}>
+      {[0.25, 0.5, 0.75, 1].map((f) => (
+        <polygon key={f} points={ringPoints(f)} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+      ))}
+      {ATTRIBUTES.map((a, i) => {
+        const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+        const [x, y] = [cx + r * 1.28 * Math.cos(angle), cy + r * 1.28 * Math.sin(angle)];
+        return (
+          <text
+            key={a}
+            x={x}
+            y={y}
+            fontSize="9"
+            fill="#9d96b5"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            style={{ fontFamily: "'Rajdhani', sans-serif", letterSpacing: "0.05em" }}
+          >
+            {a.slice(0, 3).toUpperCase()}
+          </text>
+        );
+      })}
+      <polygon
+        points={dataPoints}
+        fill={`${accent.a}33`}
+        stroke={accent.a}
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      {ATTRIBUTES.map((a, i) => {
+        const [x, y] = pointFor(i, values[a] || 0);
+        return <circle key={a} cx={x} cy={y} r="2.5" fill={accent.b} />;
+      })}
+    </svg>
+  );
+}
+
+/* ============================================================
+   MAIN APP
+   ============================================================ */
+
+const STEPS = ["Identity", "Class", "Attributes", "Gear", "Signatures", "Base Effects", "Combat Rules", "Sheet"];
+
+function CharacterCreator() {
+  const [step, setStep] = useState(0);
+  const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
+  const [rank, setRank] = useState(1);
+  const [rank5Choice, setRank5Choice] = useState(null); // 'signatureBaseEffect' | 'additionalSubclass' | 'signatureGear' | 'attributesStock'
+  const [classKey, setClassKey] = useState("trueBorn");
+  const [subclassKey, setSubclassKey] = useState("enhanced");
+  const [attrs, setAttrs] = useState(Object.fromEntries(ATTRIBUTES.map((a) => [a, 0])));
+  const [baseStock, setBaseStock] = useState(20);
+  const [signatures, setSignatures] = useState([]);
+  const [selectedEffects, setSelectedEffects] = useState({}); // { categoryKey: [effectName,...] }
+  const [gear, setGear] = useState([]); // [{id, name, type: 'Weaponry'|'Equipment', rarity: 'common'|'rare'|'legendary'}]
+  const [oppCore, setOppCore] = useState({ Strength: 0, Toughness: 0, Speed: 0, Initiative: 0 });
+
+  const cls = CLASSES[classKey];
+  const accent = cls.accent;
+  const subclass = cls.subclasses[subclassKey];
+
+  // reset subclass when class changes
+  const handleClassChange = (key) => {
+    setClassKey(key);
+    setSubclassKey(Object.keys(CLASSES[key].subclasses)[0]);
+  };
+
+  const effectCap = useMemo(() => {
+    let cap = cls.baseEffectCap;
+    if (classKey === "trueBorn") {
+      if (rank >= 2) cap += 1; // 7th victory
+      if (rank >= 2) cap += 0; // rare transformation doesn't add ability count
+      if (rank >= 3) cap += 1; // 28th victory
+    }
+    if (classKey === "variant") {
+      if (rank >= 2) cap = 5;
+      if (rank >= 3) cap = 7;
+      if (rank >= 4) cap = 8;
+    }
+    if (classKey === "specialist") {
+      cap = cls.baseEffectCap; // fixed 5, gear count changes instead
+    }
+    return cap;
+  }, [classKey, rank, cls.baseEffectCap]);
+
+  const totalEffectsSelected = useMemo(
+    () => Object.values(selectedEffects).reduce((sum, arr) => sum + arr.length, 0),
+    [selectedEffects]
+  );
+
+  function categoryCap(cat) {
+    return rank >= 4 ? cat.capRank4 : cat.cap;
   }
-  renderRoster();
-}
 
-async function persistIndex(){
-  try{ await window.storage.set('char-index', JSON.stringify(order)); }
-  catch(e){ console.error('index save failed', e); }
-}
-
-async function persistCharacter(ch){
-  try{ await window.storage.set('char:'+ch.id, JSON.stringify(ch)); return true; }
-  catch(e){ console.error('char save failed', e); return false; }
-}
-
-async function deleteCharacterStorage(id){
-  try{ await window.storage.delete('char:'+id); }catch(e){}
-}
-
-/* ============================= RENDER: ROSTER ============================= */
-function renderRoster(){
-  const el = document.getElementById('roster');
-  if(order.length === 0){
-    el.innerHTML = '<div class="rosterEmpty">No fighters yet. Build your first one — it\'ll be saved here, ready for the battle engine.</div>';
-    return;
+  function toggleEffect(catKey, effectName, catObj) {
+    setSelectedEffects((prev) => {
+      const current = prev[catKey] || [];
+      const isSelected = current.includes(effectName);
+      let next;
+      if (isSelected) {
+        next = current.filter((n) => n !== effectName);
+      } else {
+        const cap = categoryCap(catObj);
+        if (current.length >= cap) return prev; // at category cap
+        if (totalEffectsSelected >= effectCap) return prev; // at total cap
+        // mutex categories (healing vs reduction)
+        if (catObj.mutexWith) {
+          for (const mk of catObj.mutexWith) {
+            if ((prev[mk] || []).length > 0) return prev;
+          }
+        }
+        next = [...current, effectName];
+      }
+      return { ...prev, [catKey]: next };
+    });
   }
-  el.innerHTML = order.map(id=>{
-    const c = characters[id];
-    if(!c) return '';
-    const active = id === currentId ? 'active' : '';
-    return `<div class="ticket ${active}" onclick="loadCharacter('${id}')">
-      <div class="name">${escapeHtml(c.name || 'Unnamed')}</div>
-      <div class="meta">RANK ${c.rank} · ${escapeHtml((c.universe||'').split('—').pop().trim())}</div>
-      <button class="del" onclick="event.stopPropagation(); removeCharacter('${id}')" title="Delete">✕</button>
-    </div>`;
-  }).join('');
-}
 
-function escapeHtml(s){
-  return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
+  const isSpecialist = classKey === "specialist";
+  const gearTotalCap = isSpecialist ? 4 : 2;
 
-/* ============================= ACTIONS ============================= */
-function newCharacter(){
-  draft = blankCharacter();
-  currentId = null;
-  document.getElementById('editingLabel').textContent = 'New Fighter';
-  document.getElementById('saveMsg').textContent = '';
-  renderAll();
-  renderRoster();
-}
-
-function loadCharacter(id){
-  const c = characters[id];
-  if(!c) return;
-  draft = JSON.parse(JSON.stringify(c));
-  currentId = id;
-  document.getElementById('editingLabel').textContent = 'Editing: ' + (c.name || 'Unnamed');
-  document.getElementById('saveMsg').textContent = '';
-  renderAll();
-  renderRoster();
-}
-
-async function removeCharacter(id){
-  order = order.filter(x=>x!==id);
-  delete characters[id];
-  await deleteCharacterStorage(id);
-  await persistIndex();
-  if(currentId === id) newCharacter();
-  renderRoster();
-}
-
-async function saveCharacter(){
-  draft.name = document.getElementById('fName').value.trim();
-  if(!draft.name){
-    document.getElementById('saveMsg').style.color = 'var(--crimson)';
-    document.getElementById('saveMsg').textContent = 'Give your fighter a name first.';
-    return;
+  function addGear(rarity, type) {
+    setGear((prev) => {
+      if (prev.length >= gearTotalCap) return prev;
+      if (!isSpecialist) {
+        const cap = GEAR_TIERS.find((g) => g.key === rarity)?.capNonSpecialist ?? 1;
+        const count = prev.filter((g) => g.rarity === rarity).length;
+        if (count >= cap) return prev;
+      }
+      const tier = GEAR_TIERS.find((g) => g.key === rarity);
+      return [...prev, { id: `${Date.now()}-${Math.random()}`, type, rarity, name: `${tier.label} ${type}` }];
+    });
   }
-  characters[draft.id] = JSON.parse(JSON.stringify(draft));
-  if(!order.includes(draft.id)) order.unshift(draft.id);
-  currentId = draft.id;
-  await persistCharacter(characters[draft.id]);
-  await persistIndex();
-  document.getElementById('saveMsg').style.color = 'var(--good)';
-  document.getElementById('saveMsg').textContent = 'Saved to roster.';
-  document.getElementById('editingLabel').textContent = 'Editing: ' + draft.name;
-  renderRoster();
-}
 
-/* ============================= RENDER: FORM ============================= */
-function renderAll(){
-  document.getElementById('fName').value = draft.name;
-
-  const uSel = document.getElementById('fUniverse');
-  uSel.innerHTML = UNIVERSES.map(u=>`<option ${u===draft.universe?'selected':''}>${u}</option>`).join('');
-  uSel.onchange = ()=>{ draft.universe = uSel.value; };
-
-  renderRankPicker();
-  renderStatBar();
-  renderAttrs();
-  renderCategories();
-}
-
-function renderRankPicker(){
-  const el = document.getElementById('rankPicker');
-  el.innerHTML = [1,2,3,4,5].map(r=>
-    `<button class="rankBtn ${r===draft.rank?'sel':''}" onclick="setRank(${r})">${r}</button>`
-  ).join('');
-  document.getElementById('crestMini').textContent = draft.rank;
-}
-
-function setRank(r){
-  draft.rank = r;
-  // trim picks that exceed new caps
-  for(const cat of CATEGORIES){
-    const cap = capFor(cat);
-    let list = draft.picks[cat.key] || [];
-    if(cat.minRank && r < cat.minRank) list = [];
-    if(list.length > cap) list = list.slice(0, cap);
-    draft.picks[cat.key] = list;
+  function removeGear(id) {
+    setGear((prev) => prev.filter((g) => g.id !== id));
   }
-  renderAll();
-}
 
-function renderStatBar(){
-  const info = RANK_INFO[draft.rank];
-  document.getElementById('statBar').innerHTML = `
-    <div class="stat">Base Stock<b>${info.baseStock}</b></div>
-    <div class="stat">Max Stocks<b>${info.maxStocks}</b></div>
-    <div class="stat">Base Effect Slots / Category<b>${info.effSlotMax}</b></div>
-    <div class="stat">Signatures Allowed<b>${info.signatures}</b></div>
-    <div class="stat">Finisher Unlocked<b>${draft.rank>=3 ? 'Yes' : 'Rank 3+'}</b></div>
-  `;
-}
+  // You start with 1 Signature at Rank 1. A Legendary/Living Relic gains its own Signature at
+  // Rank 4 (42nd Victory), and Rank 5 (60th Victory) can optionally grant one more if chosen.
+  const legendaryGearCount = useMemo(() => gear.filter((g) => g.rarity === "legendary").length, [gear]);
+  const signatureCap = useMemo(() => {
+    let cap = 1;
+    if (rank >= 4) cap += legendaryGearCount;
+    if (rank >= 5 && (rank5Choice === "signatureBaseEffect" || rank5Choice === "signatureGear")) cap += 1;
+    return cap;
+  }, [rank, legendaryGearCount, rank5Choice]);
 
-const ATTR_LABELS = {strength:'Strength', toughness:'Toughness', speed:'Speed', initiative:'Initiative'};
-function renderAttrs(){
-  const el = document.getElementById('attrGrid');
-  el.innerHTML = Object.keys(ATTR_LABELS).map(k=>`
-    <div class="attrBox">
-      <div class="lbl">${ATTR_LABELS[k]}</div>
-      <div class="attrCtrl">
-        <button onclick="bumpAttr('${k}',-1)">−</button>
-        <div class="val">${draft.attrs[k]}</div>
-        <button onclick="bumpAttr('${k}',1)">+</button>
+  function toggleSignature(sig) {
+    setSignatures((prev) => {
+      const has = prev.some((s) => s.name === sig.name);
+      if (has) return prev.filter((s) => s.name !== sig.name);
+      if (prev.length >= signatureCap) return prev; // at Signature cap for current Rank
+      return [...prev, sig];
+    });
+  }
+
+  // conflict detection
+  const allSelectedEffectNames = useMemo(() => {
+    const set = new Set();
+    Object.values(selectedEffects).forEach((arr) => arr.forEach((n) => set.add(n)));
+    return set;
+  }, [selectedEffects]);
+
+  const effectConflicts = useMemo(() => {
+    const warnings = [];
+    CATEGORIES.forEach((cat) => {
+      (cat.effects || []).forEach((eff) => {
+        if (allSelectedEffectNames.has(eff.name) && eff.excludes) {
+          eff.excludes.forEach((ex) => {
+            if (allSelectedEffectNames.has(ex)) {
+              warnings.push(`${eff.name} conflicts with ${ex}`);
+            }
+          });
+        }
+      });
+    });
+    return warnings;
+  }, [allSelectedEffectNames]);
+
+  const sigConflicts = useMemo(() => {
+    const warnings = [];
+    const hasReroll = signatures.some((s) => s.tag === "reroll");
+    const hasFlip = signatures.some((s) => s.tag === "flip");
+    if (hasReroll && hasFlip) warnings.push("Re-rolling Signatures cannot be taken with Flip Signatures.");
+    const cancelCount = signatures.filter((s) => s.tag === "cancel").length;
+    if (cancelCount > 1) warnings.push("Only 1 Canceling Out/Negating Signature may be taken.");
+    return warnings;
+  }, [signatures]);
+
+  const attrTotal = useMemo(() => ATTRIBUTES.reduce((s, a) => s + (attrs[a] || 0), 0), [attrs]);
+
+  const cardBg = `radial-gradient(circle at 30% 0%, ${accent.a}22, transparent 60%), radial-gradient(circle at 80% 100%, ${accent.b}22, transparent 60%), #14121c`;
+
+  return (
+    <div
+      style={{
+        fontFamily: "'Inter', sans-serif",
+        background: "#0c0a12",
+        color: "#e8e3f0",
+        minHeight: "100%",
+        padding: "20px",
+      }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;700&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
+        * { box-sizing: border-box; }
+        .rc-scroll::-webkit-scrollbar { width: 8px; }
+        .rc-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+        button.rc-btn { cursor: pointer; transition: all .15s ease; }
+        button.rc-btn:hover { transform: translateY(-1px); }
+        .rc-chip { cursor: pointer; transition: all .12s ease; }
+        .rc-chip:hover { border-color: rgba(255,255,255,0.35) !important; }
+      `}</style>
+
+      <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+        {/* Header */}
+        <div style={{ marginBottom: 24 }}>
+          <div
+            style={{
+              fontFamily: "'Cinzel Decorative', serif",
+              fontSize: 28,
+              fontWeight: 900,
+              letterSpacing: "0.02em",
+              background: `linear-gradient(90deg, ${accent.a}, ${accent.b})`,
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            Ascension Codex
+          </div>
+          <div style={{ color: "#8b849f", fontSize: 13, marginTop: 2, fontFamily: "'Rajdhani', sans-serif", letterSpacing: "0.08em" }}>
+            CHARACTER FORGE — CLASS · SIGNATURE · BASE EFFECT BUILDER
+          </div>
+        </div>
+
+        {/* Step nav */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
+          {STEPS.map((s, i) => (
+            <button
+              key={s}
+              className="rc-btn"
+              onClick={() => setStep(i)}
+              style={{
+                padding: "8px 16px",
+                borderRadius: 999,
+                border: `1px solid ${step === i ? accent.a : "rgba(255,255,255,0.12)"}`,
+                background: step === i ? `${accent.a}22` : "transparent",
+                color: step === i ? "#fff" : "#9d96b5",
+                fontFamily: "'Rajdhani', sans-serif",
+                fontWeight: 600,
+                fontSize: 13,
+                letterSpacing: "0.05em",
+              }}
+            >
+              {String(i + 1).padStart(2, "0")} · {s.toUpperCase()}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20 }}>
+          {/* MAIN PANEL */}
+          <div
+            style={{
+              background: "#14121c",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 16,
+              padding: 24,
+              minHeight: 480,
+            }}
+          >
+            {step === 0 && (
+              <div>
+                <h2 style={h2style(accent)}>Identity</h2>
+                <Field label="Character Name">
+                  <input style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Kaze Renjiro" />
+                </Field>
+                <Field label="Title / Epithet">
+                  <input style={inputStyle} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. The Ashen Blade" />
+                </Field>
+                <Field label="Rank">
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {[1, 2, 3, 4, 5].map((r) => (
+                      <button
+                        key={r}
+                        className="rc-btn"
+                        onClick={() => setRank(r)}
+                        style={pillStyle(rank === r, accent)}
+                      >
+                        Rank {r}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+                {rank >= 5 && (
+                  <Field label="Rank 5 Bonus (60th Victory — choose one)">
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {[
+                        { key: "signatureBaseEffect", label: "Signature on a Base Effect (CON or PAS)" },
+                        { key: "additionalSubclass", label: "Additional Subclass from the same Pool" },
+                        { key: "signatureGear", label: "Additional Signature on Weaponry/Equipment" },
+                        { key: "attributesStock", label: "+2 Attributes and 20 Base Stocks" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.key}
+                          className="rc-btn"
+                          onClick={() => setRank5Choice(opt.key)}
+                          style={{
+                            textAlign: "left",
+                            padding: "8px 12px",
+                            borderRadius: 8,
+                            border: `1px solid ${rank5Choice === opt.key ? accent.a : "rgba(255,255,255,0.1)"}`,
+                            background: rank5Choice === opt.key ? `${accent.a}18` : "transparent",
+                            color: "#fff",
+                            fontSize: 13,
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </Field>
+                )}
+                <div style={{ fontSize: 12, color: "#9d96b5", marginTop: 4 }}>
+                  Signature slots at this Rank: <span style={{ color: accent.a, fontWeight: 700 }}>{signatureCap}</span>
+                  {legendaryGearCount > 0 && rank >= 4 ? ` (includes +${legendaryGearCount} from equipped Legendary/Living Relic Gear)` : ""}
+                </div>
+                <Field label="Base Stock">
+                  <input
+                    type="number"
+                    style={inputStyle}
+                    value={baseStock}
+                    onChange={(e) => setBaseStock(Number(e.target.value) || 0)}
+                  />
+                </Field>
+              </div>
+            )}
+
+            {step === 1 && (
+              <div>
+                <h2 style={h2style(accent)}>Class</h2>
+                <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+                  {Object.entries(CLASSES).map(([key, c]) => (
+                    <button
+                      key={key}
+                      className="rc-btn"
+                      onClick={() => handleClassChange(key)}
+                      style={{
+                        flex: 1,
+                        padding: "14px 12px",
+                        borderRadius: 12,
+                        border: `1.5px solid ${classKey === key ? c.accent.a : "rgba(255,255,255,0.1)"}`,
+                        background: classKey === key ? `linear-gradient(135deg, ${c.accent.a}22, ${c.accent.b}22)` : "rgba(255,255,255,0.03)",
+                        color: "#fff",
+                        textAlign: "left",
+                        fontFamily: "'Cinzel', serif",
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, fontSize: 15 }}>{c.label}</div>
+                      <div style={{ fontSize: 11, color: "#9d96b5", marginTop: 4, fontFamily: "'Inter', sans-serif", lineHeight: 1.4 }}>
+                        {c.blurb}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ fontSize: 12, color: "#9d96b5", marginBottom: 8, fontFamily: "'Rajdhani', sans-serif", letterSpacing: "0.08em" }}>
+                  SUBCLASS (choose 1 — premade)
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 20 }}>
+                  {Object.entries(cls.subclasses).map(([key, sc]) => (
+                    <button
+                      key={key}
+                      className="rc-btn"
+                      onClick={() => setSubclassKey(key)}
+                      style={{
+                        padding: "10px 12px",
+                        borderRadius: 10,
+                        border: `1px solid ${subclassKey === key ? accent.a : "rgba(255,255,255,0.1)"}`,
+                        background: subclassKey === key ? `${accent.a}18` : "transparent",
+                        color: "#fff",
+                        textAlign: "left",
+                      }}
+                    >
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{sc.label}</div>
+                    </button>
+                  ))}
+                </div>
+                <div
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 10,
+                    padding: 14,
+                    fontSize: 13,
+                    lineHeight: 1.6,
+                    color: "#cdc7de",
+                    marginBottom: 20,
+                  }}
+                >
+                  {subclass.desc}
+                </div>
+
+                <div style={{ fontSize: 12, color: "#9d96b5", marginBottom: 8, fontFamily: "'Rajdhani', sans-serif", letterSpacing: "0.08em" }}>
+                  RANK PROGRESSION
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {cls.rankChart.map((row, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex",
+                        gap: 10,
+                        fontSize: 12,
+                        padding: "8px 10px",
+                        borderRadius: 8,
+                        background: row.rank <= rank ? `${accent.a}15` : "rgba(255,255,255,0.02)",
+                        opacity: row.rank <= rank ? 1 : 0.5,
+                      }}
+                    >
+                      <span style={{ color: accent.a, fontFamily: "'JetBrains Mono', monospace", minWidth: 46 }}>R{row.rank}</span>
+                      <span style={{ color: "#9d96b5", minWidth: 90 }}>{row.req}</span>
+                      <span style={{ color: "#cdc7de" }}>{row.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div>
+                <h2 style={h2style(accent)}>Attributes</h2>
+                <div style={{ fontSize: 12, color: "#9d96b5", marginBottom: 6 }}>
+                  Core Attributes are absolute Levels (0-5), compared against an opponent's via the Attribute Charts in Combat Rules.
+                  No Attribute may sit more than 1 above your current Rank ({rank}).
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+                  {CORE_ATTRS.map((a) => {
+                    const over = (attrs[a] || 0) > rank + 1;
+                    return (
+                      <div key={a} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: "10px 14px", border: over ? "1px solid #7a2b2b" : "1px solid transparent" }}>
+                        <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, fontSize: 14 }}>{a}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <button className="rc-btn" style={stepBtnStyle} onClick={() => setAttrs((p) => ({ ...p, [a]: clampNum((p[a] || 0) - 1, 0, 5) }))}>−</button>
+                          <span style={{ width: 28, textAlign: "center", fontFamily: "'JetBrains Mono', monospace", color: over ? "#ff8080" : accent.a, fontWeight: 700 }}>
+                            {attrs[a] || 0}
+                          </span>
+                          <button className="rc-btn" style={stepBtnStyle} onClick={() => setAttrs((p) => ({ ...p, [a]: clampNum((p[a] || 0) + 1, 0, 5) }))}>+</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div style={{ fontSize: 12, color: "#9d96b5", marginBottom: 6 }}>
+                  Roll Modifiers are flat bonuses layered on from Base Effects, Signatures, and Gear (max ±2 per single Base Effect).
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  {ROLL_MODS.map((a) => (
+                    <div key={a} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: "10px 14px" }}>
+                      <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, fontSize: 14 }}>{a}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <button className="rc-btn" style={stepBtnStyle} onClick={() => setAttrs((p) => ({ ...p, [a]: (p[a] || 0) - 1 }))}>−</button>
+                        <span style={{ width: 28, textAlign: "center", fontFamily: "'JetBrains Mono', monospace", color: accent.a, fontWeight: 700 }}>
+                          {attrs[a] >= 0 ? `+${attrs[a]}` : attrs[a]}
+                        </span>
+                        <button className="rc-btn" style={stepBtnStyle} onClick={() => setAttrs((p) => ({ ...p, [a]: (p[a] || 0) + 1 }))}>+</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginTop: 16, fontSize: 13, color: "#9d96b5" }}>
+                  Net total (all 8): <span style={{ color: "#fff", fontWeight: 700 }}>{attrTotal >= 0 ? `+${attrTotal}` : attrTotal}</span>
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div>
+                <h2 style={h2style(accent)}>Gear</h2>
+                <div style={{ fontSize: 12, color: "#9d96b5", marginBottom: 12, lineHeight: 1.5 }}>
+                  {isSpecialist
+                    ? "As a Specialist, you can carry up to 4 pieces of Weaponry/Equipment (2 of the same type active at once, 3 at Rank 4)."
+                    : "Non-Specialists can carry up to 2 pieces of Gear at a time: max 4 Common, max 1 Rare, max 1 Legendary/Living Relic."}
+                  {" "}Gear equipped: {gear.length}/{gearTotalCap}.
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+                  {GEAR_TIERS.map((tier) => (
+                    <div key={tier.key} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                        <div style={{ fontFamily: "'Cinzel', serif", fontWeight: 700, color: accent.a, fontSize: 14 }}>
+                          {tier.label} <span style={{ color: "#9d96b5", fontSize: 11 }}>({tier.die})</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: "#756f8a" }}>
+                          {tier.rounds ? `${tier.rounds} Rounds · ` : ""}Breaks after {tier.failToDisarm} fails ({tier.disarmRounds} Round Disarm)
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 12, color: "#cdc7de", marginTop: 4 }}>{tier.bonus}</div>
+                      <div style={{ fontSize: 11, color: "#6b6480", marginTop: 2, fontStyle: "italic" }}>e.g. {tier.example}</div>
+                      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                        <button className="rc-btn" style={smallBtnStyle(accent)} onClick={() => addGear(tier.key, "Weaponry")}>+ Weaponry</button>
+                        <button className="rc-btn" style={smallBtnStyle(accent)} onClick={() => addGear(tier.key, "Equipment")}>+ Equipment</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ fontSize: 12, color: "#9d96b5", marginBottom: 8, fontFamily: "'Rajdhani', sans-serif", letterSpacing: "0.08em" }}>
+                  EQUIPPED GEAR
+                </div>
+                {gear.length === 0 && <div style={emptyStyle}>No Gear equipped yet.</div>}
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 20 }}>
+                  {gear.map((g) => (
+                    <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: `${accent.a}12`, borderRadius: 8, padding: "8px 12px" }}>
+                      <span style={{ fontSize: 13 }}>{g.name}</span>
+                      <button className="rc-btn" style={{ ...smallBtnStyle(accent), borderColor: "#7a2b2b", color: "#ffb4b4" }} onClick={() => removeGear(g.id)}>Remove</button>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ fontSize: 12, color: "#9d96b5", marginBottom: 8, fontFamily: "'Rajdhani', sans-serif", letterSpacing: "0.08em" }}>
+                  GENERAL GEAR RULES
+                </div>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: "#9d96b5", lineHeight: 1.7 }}>
+                  {GENERAL_GEAR_RULES.map((r, i) => <li key={i}>{r}</li>)}
+                </ul>
+              </div>
+            )}
+
+            {step === 4 && (
+              <div>
+                <h2 style={h2style(accent)}>Signatures</h2>
+                <div style={{ fontSize: 12, color: "#9d96b5", marginBottom: 4 }}>
+                  {signatures.length} / {signatureCap} Signature{signatureCap === 1 ? "" : "s"} selected — you start with 1 at Rank 1;
+                  {" "}more open up per the Rank chart (a Legendary/Living Relic grants one at Rank 4, and Rank 5 can grant another).
+                </div>
+                <div style={{ fontSize: 12, color: "#9d96b5", marginBottom: 12 }}>
+                  Re-rolling Effects cannot be combined with Flip Effects. Max 1 Canceling/Negating Signature.
+                </div>
+                {signatures.length > signatureCap && (
+                  <div style={{ background: "#3a1414", border: "1px solid #7a2b2b", borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 12, color: "#ffb4b4" }}>
+                    ⚠ You have more Signatures selected ({signatures.length}) than your current Rank allows ({signatureCap}). Remove some, or raise your Rank/gear.
+                  </div>
+                )}
+                {sigConflicts.length > 0 && (
+                  <div style={{ background: "#3a1414", border: "1px solid #7a2b2b", borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 12, color: "#ffb4b4" }}>
+                    {sigConflicts.map((w, i) => <div key={i}>⚠ {w}</div>)}
+                  </div>
+                )}
+                <div className="rc-scroll" style={{ maxHeight: 420, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6, paddingRight: 6 }}>
+                  {SIGNATURES.map((sig) => {
+                    const selected = signatures.some((s) => s.name === sig.name);
+                    const atCap = !selected && signatures.length >= signatureCap;
+                    return (
+                      <div
+                        key={sig.name}
+                        className="rc-chip"
+                        onClick={() => toggleSignature(sig)}
+                        style={{
+                          padding: "10px 14px",
+                          borderRadius: 10,
+                          border: `1px solid ${selected ? accent.a : "rgba(255,255,255,0.08)"}`,
+                          background: selected ? `${accent.a}15` : "rgba(255,255,255,0.02)",
+                          opacity: atCap ? 0.4 : 1,
+                          cursor: atCap ? "default" : "pointer",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                          <span style={{ fontWeight: 600, fontSize: 13 }}>{sig.name}</span>
+                          <span style={{ fontSize: 10, color: accent.b, fontFamily: "'JetBrains Mono', monospace" }}>{sig.tag.toUpperCase()}</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: "#9d96b5", marginTop: 4, lineHeight: 1.4 }}>{sig.desc}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {step === 5 && (
+              <div>
+                <h2 style={h2style(accent)}>Base Effects</h2>
+                <div style={{ fontSize: 12, color: "#9d96b5", marginBottom: 8 }}>
+                  {totalEffectsSelected} / {effectCap} total Base Effects selected for a {cls.label}.
+                </div>
+                {effectConflicts.length > 0 && (
+                  <div style={{ background: "#3a1414", border: "1px solid #7a2b2b", borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 12, color: "#ffb4b4" }}>
+                    {effectConflicts.map((w, i) => <div key={i}>⚠ {w}</div>)}
+                  </div>
+                )}
+                <div className="rc-scroll" style={{ maxHeight: 560, overflowY: "auto", paddingRight: 6 }}>
+                  {CATEGORIES.map((cat) => {
+                    const chosen = selectedEffects[cat.key] || [];
+                    const cap = categoryCap(cat);
+                    let lastGroup = null;
+                    return (
+                      <div key={cat.key} style={{ marginBottom: 18 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                          <div style={{ fontFamily: "'Cinzel', serif", fontWeight: 700, fontSize: 14, color: accent.a }}>{cat.label}</div>
+                          <div style={{ fontSize: 11, color: "#9d96b5", fontFamily: "'JetBrains Mono', monospace" }}>{chosen.length}/{cap}</div>
+                        </div>
+                        <div style={{ fontSize: 11, color: "#756f8a", marginBottom: 8, lineHeight: 1.4 }}>{cat.tagline}</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                          {cat.effects.map((eff) => {
+                            const selected = chosen.includes(eff.name);
+                            const showGroupHeader = cat.groups && eff.group !== lastGroup;
+                            lastGroup = eff.group;
+                            return (
+                              <React.Fragment key={eff.name}>
+                                {showGroupHeader && (
+                                  <div style={{ fontSize: 10, letterSpacing: "0.1em", color: "#6b6480", marginTop: 6, textTransform: "uppercase" }}>
+                                    {eff.group}
+                                  </div>
+                                )}
+                                <div
+                                  className="rc-chip"
+                                  onClick={() => !eff.stub && toggleEffect(cat.key, eff.name, cat)}
+                                  style={{
+                                    padding: "8px 12px",
+                                    borderRadius: 8,
+                                    border: `1px solid ${selected ? accent.a : "rgba(255,255,255,0.07)"}`,
+                                    background: selected ? `${accent.a}14` : eff.stub ? "rgba(255,255,255,0.015)" : "rgba(255,255,255,0.025)",
+                                    opacity: eff.stub ? 0.45 : 1,
+                                    cursor: eff.stub ? "default" : "pointer",
+                                  }}
+                                >
+                                  <div style={{ fontSize: 12.5, fontWeight: 600 }}>{eff.name}</div>
+                                  <div style={{ fontSize: 11, color: "#9d96b5", marginTop: 3, lineHeight: 1.4 }}>{eff.desc}</div>
+                                </div>
+                              </React.Fragment>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {step === 6 && (
+              <div>
+                <h2 style={h2style(accent)}>Combat Rules Reference</h2>
+                <div className="rc-scroll" style={{ maxHeight: 620, overflowY: "auto", paddingRight: 8, display: "flex", flexDirection: "column", gap: 20 }}>
+
+                  <RefBlock title="Action Roll" accent={accent}>
+                    <p style={refP}>{ACTION_ROLL_RULE}</p>
+                  </RefBlock>
+
+                  <RefBlock title="Honorable Mentions" accent={accent}>
+                    <RefList items={HONORABLE_MENTIONS} />
+                  </RefBlock>
+
+                  <RefBlock title="Rolls" accent={accent}>
+                    <RefList items={ROLL_RULES} />
+                  </RefBlock>
+
+                  <RefBlock title="Base Effect Types" accent={accent}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {BASE_EFFECT_TYPES.map((t) => (
+                        <div key={t.tag}>
+                          <span style={{ color: accent.a, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, marginRight: 8 }}>{t.tag}</span>
+                          <span style={{ fontWeight: 600 }}>{t.label}</span>
+                          <div style={{ color: "#9d96b5", fontSize: 12, marginTop: 2, lineHeight: 1.5 }}>{t.desc}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </RefBlock>
+
+                  <RefBlock title="The Critical Effect" accent={accent}>
+                    <RefList items={CRITICAL_RULES} />
+                  </RefBlock>
+
+                  <RefBlock title="Bleed Effect" accent={accent}>
+                    <RefList items={BLEED_RULES} />
+                  </RefBlock>
+
+                  <RefBlock title="Intervening Roll" accent={accent}>
+                    <RefList items={INTERVENING_RULES} />
+                  </RefBlock>
+
+                  <RefBlock title="Damage Charts" accent={accent}>
+                    <p style={refP}>{ULTRA_DAMAGE_NOTE}</p>
+                    <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginTop: 10 }}>
+                      <MiniTable title="Damage (D6)" rows={DAMAGE_CHART_D6.map((r) => [r.roll, r.dmg])} accent={accent} />
+                      <MiniTable title="Ultra Damage (D12)" rows={ULTRA_DAMAGE_CHART_D12.map((r) => [r.roll, r.dmg])} accent={accent} />
+                    </div>
+                  </RefBlock>
+
+                  <RefBlock title="Attribute Rules" accent={accent}>
+                    <RefList items={ATTRIBUTE_RULES} />
+                  </RefBlock>
+
+                  <RefBlock title="Attribute Matchup Calculator" accent={accent}>
+                    <p style={refP}>
+                      Damage &amp; Accuracy are clamped to a ±2 spread (beyond that the matchup is "X" — special "Doubles" rules apply). Block &amp; Dodge run the full spread.
+                    </p>
+                    <MatchupCalculator myCore={{ Strength: attrs.Strength || 0, Toughness: attrs.Toughness || 0, Speed: attrs.Speed || 0, Initiative: attrs.Initiative || 0 }} oppCore={oppCore} setOppCore={setOppCore} accent={accent} />
+                  </RefBlock>
+
+                  <RefBlock title="The Disaster Effect" accent={accent}>
+                    <p style={refP}>{DISASTER_TEXT}</p>
+                    <MiniTable title="Strength → Criticals needed" rows={DISASTER_TABLE.map((r) => [`Strength ${r.strength}`, r.criticals])} accent={accent} />
+                  </RefBlock>
+
+                  <RefBlock title="Transformations" accent={accent}>
+                    <p style={refP}>{TRANSFORMATION_NOTE}</p>
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={tableStyle}>
+                        <thead>
+                          <tr>
+                            {["Tier", "Attributes", "Forms", "Rounds", "Stocks", "Examples"].map((h) => <th key={h} style={thStyle}>{h}</th>)}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {TRANSFORMATION_TIERS.map((t) => (
+                            <tr key={t.tier}>
+                              <td style={tdStyle}>{t.tier}</td>
+                              <td style={tdStyle}>{t.attr}</td>
+                              <td style={tdStyle}>{t.forms}</td>
+                              <td style={tdStyle}>{t.rounds}</td>
+                              <td style={tdStyle}>{t.stocks}</td>
+                              <td style={{ ...tdStyle, color: "#756f8a", fontSize: 11 }}>{t.examples}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div style={{ fontSize: 11, color: "#6b6480", marginTop: 6, fontStyle: "italic" }}>
+                      Note: these figures come from the general Transformations rules — the True Born class's own Rank chart (see Class step) uses slightly different Stock/Attribute values. Let me know which is authoritative if they should match.
+                    </div>
+                  </RefBlock>
+
+                  <RefBlock title="Universal Rank / Lv Chart" accent={accent}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {UNIVERSAL_RANK_CHART.map((row, i) => (
+                        <div key={i} style={{ display: "flex", gap: 10, fontSize: 12, padding: "8px 10px", borderRadius: 8, background: row.rank <= rank ? `${accent.a}15` : "rgba(255,255,255,0.02)", opacity: row.rank <= rank ? 1 : 0.5 }}>
+                          <span style={{ color: accent.a, fontFamily: "'JetBrains Mono', monospace", minWidth: 46 }}>R{row.rank}</span>
+                          <span style={{ color: "#9d96b5", minWidth: 90 }}>{row.req}</span>
+                          <span style={{ color: "#cdc7de" }}>{row.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </RefBlock>
+                </div>
+              </div>
+            )}
+
+            {step === 7 && (
+              <div>
+                <h2 style={h2style(accent)}>Character Sheet</h2>
+                <SheetSummary
+                  data={{ name, title, rank, classKey, cls, subclass, attrs, baseStock, signatures, selectedEffects, effectCap, gear, signatureCap }}
+                  accent={accent}
+                />
+              </div>
+            )}
+
+            {/* nav buttons */}
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 28 }}>
+              <button
+                className="rc-btn"
+                disabled={step === 0}
+                onClick={() => setStep((s) => Math.max(0, s - 1))}
+                style={{ ...navBtnStyle, opacity: step === 0 ? 0.3 : 1 }}
+              >
+                ← Back
+              </button>
+              <button
+                className="rc-btn"
+                disabled={step === STEPS.length - 1}
+                onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
+                style={{ ...navBtnStyle, background: `linear-gradient(90deg, ${accent.a}, ${accent.b})`, color: "#0c0a12", border: "none", opacity: step === STEPS.length - 1 ? 0.3 : 1 }}
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+
+          {/* LIVE CARD PREVIEW */}
+          <div style={{ position: "sticky", top: 20, alignSelf: "start" }}>
+            <div
+              style={{
+                background: cardBg,
+                border: `1px solid ${accent.a}44`,
+                borderRadius: 18,
+                padding: 20,
+                boxShadow: `0 0 40px -12px ${accent.a}55`,
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  top: 12,
+                  right: -34,
+                  background: `linear-gradient(90deg, ${accent.a}, ${accent.b})`,
+                  color: "#0c0a12",
+                  fontSize: 11,
+                  fontWeight: 800,
+                  padding: "3px 40px",
+                  transform: "rotate(40deg)",
+                  fontFamily: "'Rajdhani', sans-serif",
+                  letterSpacing: "0.1em",
+                }}
+              >
+                RANK {rank}
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+                <div
+                  style={{
+                    width: 96,
+                    height: 96,
+                    borderRadius: "50%",
+                    background: `conic-gradient(from 0deg, ${accent.a}, ${accent.b}, ${accent.a})`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: `0 0 30px -4px ${accent.a}`,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 84,
+                      height: 84,
+                      borderRadius: "50%",
+                      background: "#0c0a12",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontFamily: "'Cinzel Decorative', serif",
+                      fontSize: 26,
+                      fontWeight: 900,
+                      color: "#fff",
+                    }}
+                  >
+                    {initials(name)}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ textAlign: "center", marginBottom: 4 }}>
+                <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 18, fontWeight: 900 }}>{name || "Unnamed"}</div>
+                <div style={{ fontSize: 11, color: accent.a, fontFamily: "'Rajdhani', sans-serif", letterSpacing: "0.06em" }}>
+                  {title || "—"}
+                </div>
+              </div>
+
+              <div style={{ textAlign: "center", fontSize: 11, color: "#9d96b5", marginBottom: 14, fontFamily: "'Rajdhani', sans-serif" }}>
+                {cls.label.toUpperCase()} · {subclass.label.toUpperCase()}
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+                <RadarChart values={attrs} accent={accent} />
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  background: "rgba(255,255,255,0.04)",
+                  borderRadius: 10,
+                  padding: "8px 12px",
+                  fontSize: 12,
+                  marginBottom: 10,
+                }}
+              >
+                <span style={{ color: "#9d96b5" }}>Base Stock</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", color: "#fff", fontWeight: 700 }}>{baseStock}</span>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 8 }}>
+                <span style={{ color: "#9d96b5" }}>Base Effects</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", color: accent.a }}>{totalEffectsSelected}/{effectCap}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                <span style={{ color: "#9d96b5" }}>Signatures</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", color: accent.a }}>{signatures.length}/{signatureCap}</span>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 12, fontSize: 11, color: "#6b6480", textAlign: "center", lineHeight: 1.5 }}>
+              Battle mode is coming in a future update — this Codex will be the character source for it.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  `).join('');
-  const vals = Object.values(draft.attrs);
-  const spread = Math.max(...vals) - Math.min(...vals);
-  const warnEl = document.getElementById('attrWarn');
-  if(spread > 1 && draft.rank < 4){
-    warnEl.textContent = 'Note: outside Rank 4/5, attributes should stay within 1 level of each other.';
-  } else if(Math.max(...vals) >= 5 && draft.rank < 4){
-    warnEl.textContent = 'Note: a 5 in any attribute is normally reserved for Rank 4/5 fighters.';
-  } else {
-    warnEl.textContent = '';
-  }
+  );
 }
 
-function bumpAttr(key, dir){
-  const v = draft.attrs[key] + dir;
-  if(v < 0 || v > 5) return;
-  draft.attrs[key] = v;
-  renderAttrs();
-}
-
-function capFor(cat){
-  return typeof cat.max === 'function' ? cat.max(draft.rank) : cat.max;
-}
-
-function allSelectedIds(){
-  const s = new Set();
-  for(const k in draft.picks) (draft.picks[k]||[]).forEach(id=>s.add(id));
-  return s;
-}
-
-function findItemById(id){
-  for(const cat of CATEGORIES){
-    const it = cat.items.find(i=>i.id===id);
-    if(it) return it;
-  }
-  return null;
-}
-
-function toggleEffect(catKey, effId){
-  const cat = CATEGORIES.find(c=>c.key===catKey);
-  const cap = capFor(cat);
-  let list = draft.picks[catKey] || [];
-  const selected = allSelectedIds();
-  const item = cat.items.find(i=>i.id===effId);
-
-  if(list.includes(effId)){
-    list = list.filter(x=>x!==effId);
-  } else {
-    if(list.length >= cap) return; // category full
-    // check exclusions (this item excludes others, or others exclude this item)
-    const excludesFromItem = item.excludes || [];
-    for(const otherId of excludesFromItem){
-      if(selected.has(otherId)) return; // blocked
-    }
-    for(const otherId of selected){
-      const other = findItemById(otherId);
-      if(other && other.excludes && other.excludes.includes(effId)) return; // blocked
-    }
-    // healing / stock-reduction mutual exclusion
-    if(cat.excludesCategory){
-      const otherCat = cat.excludesCategory;
-      if((draft.picks[otherCat]||[]).length > 0) return;
-    }
-    list.push(effId);
-  }
-  draft.picks[catKey] = list;
-  renderCategories();
-}
-
-function toggleExpand(el){
-  el.classList.toggle('expanded');
-}
-
-function renderCategories(){
-  const root = document.getElementById('categoriesRoot');
-  const selected = allSelectedIds();
-  let totalPicked = 0;
-  let html = '';
-
-  for(const cat of CATEGORIES){
-    const cap = capFor(cat);
-    const list = draft.picks[cat.key] || [];
-    totalPicked += list.length;
-    const locked = cat.minRank && draft.rank < cat.minRank;
-
-    html += `<div class="sectionTitle">${cat.label}<div class="bar"></div>
-      <span class="slotCount ${list.length>=cap?'full':''}">${list.length} / ${cap}</span>
-    </div>`;
-    if(cat.note) html += `<div class="catNote">${cat.note}</div>`;
-
-    if(locked){
-      html += `<div class="locked">Unlocks at Rank ${cat.minRank}.</div>`;
-      continue;
-    }
-
-    html += `<div class="effGrid">`;
-    for(const it of cat.items){
-      const isSel = list.includes(it.id);
-      let disabled = false;
-      if(!isSel){
-        if(list.length >= cap) disabled = true;
-        if(cat.excludesCategory && (draft.picks[cat.excludesCategory]||[]).length>0) disabled = true;
-        if(it.excludes && it.excludes.some(x=>selected.has(x))) disabled = true;
-        for(const otherId of selected){
-          const other = findItemById(otherId);
-          if(other && other.excludes && other.excludes.includes(it.id)) disabled = true;
-        }
-      }
-      const clickAttr = (disabled && !isSel) ? '' : `onclick="toggleEffect('${cat.key}','${it.id}')"`;
-      const tagHtml = (it.tag && it.tag!=='—') ? `<span class="tag ${it.tag.split('/')[0]}">${it.tag}</span>` : '';
-      html += `<div class="effCard ${isSel?'sel':''} ${disabled?'disabled':''}" ${clickAttr}>
-        <div class="top">
-          <div class="nm" onclick="event.stopPropagation(); this.closest('.effCard').classList.toggle('expanded')">${it.name}</div>
-          ${tagHtml}
+function SheetSummary({ data, accent }) {
+  const { name, title, rank, cls, subclass, attrs, baseStock, signatures, selectedEffects, effectCap, gear = [], signatureCap } = data;
+  const totalEffects = Object.values(selectedEffects).reduce((s, a) => s + a.length, 0);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      <div>
+        <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 22, fontWeight: 900 }}>{name || "Unnamed Hero"}</div>
+        <div style={{ color: accent.a, fontSize: 13 }}>{title || "No title set"}</div>
+        <div style={{ color: "#9d96b5", fontSize: 12, marginTop: 4 }}>
+          Rank {rank} {cls.label} — {subclass.label} · Base Stock {baseStock}
         </div>
-        <div class="checkline">${isSel ? '✓ selected' : (disabled ? 'unavailable' : 'tap to select')}</div>
-        <div class="txt">${it.text}</div>
-      </div>`;
-    }
-    html += `</div>`;
-  }
-  root.innerHTML = html;
-  document.getElementById('totalPill').textContent = totalPicked + ' total effects selected across all categories';
+      </div>
+
+      <div>
+        <div style={sectionLabel}>Core Attributes (Levels)</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 12 }}>
+          {CORE_ATTRS.map((a) => (
+            <div key={a} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "8px 10px", textAlign: "center" }}>
+              <div style={{ fontSize: 10, color: "#9d96b5" }}>{a}</div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: accent.a }}>{attrs[a] || 0}</div>
+            </div>
+          ))}
+        </div>
+        <div style={sectionLabel}>Roll Modifiers</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
+          {ROLL_MODS.map((a) => (
+            <div key={a} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "8px 10px", textAlign: "center" }}>
+              <div style={{ fontSize: 10, color: "#9d96b5" }}>{a}</div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: accent.a }}>
+                {attrs[a] >= 0 ? `+${attrs[a]}` : attrs[a]}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <div style={sectionLabel}>Gear ({gear.length})</div>
+        {gear.length === 0 && <div style={emptyStyle}>None equipped.</div>}
+        {gear.map((g) => (
+          <div key={g.id} style={{ fontSize: 12, marginBottom: 4 }}>{g.name}</div>
+        ))}
+      </div>
+
+      <div>
+        <div style={sectionLabel}>Signatures ({signatures.length}/{signatureCap})</div>
+        {signatures.length === 0 && <div style={emptyStyle}>None selected.</div>}
+        {signatures.map((s) => (
+          <div key={s.name} style={{ fontSize: 12, marginBottom: 6 }}>
+            <span style={{ fontWeight: 600 }}>{s.name}</span> — <span style={{ color: "#9d96b5" }}>{s.desc}</span>
+          </div>
+        ))}
+      </div>
+
+      <div>
+        <div style={sectionLabel}>Base Effects ({totalEffects}/{effectCap})</div>
+        {CATEGORIES.map((cat) => {
+          const chosen = selectedEffects[cat.key] || [];
+          if (chosen.length === 0) return null;
+          return (
+            <div key={cat.key} style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 11, color: accent.a, fontWeight: 700 }}>{cat.label}</div>
+              {chosen.map((n) => {
+                const eff = cat.effects.find((e) => e.name === n);
+                return (
+                  <div key={n} style={{ fontSize: 12, marginLeft: 4, marginTop: 2 }}>
+                    <span style={{ fontWeight: 600 }}>{n}</span> — <span style={{ color: "#9d96b5" }}>{eff?.desc}</span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+        {totalEffects === 0 && <div style={emptyStyle}>None selected.</div>}
+      </div>
+    </div>
+  );
 }
 
-/* ============================= INIT ============================= */
-(async function init(){
-  await loadRoster();
-  renderAll();
-})();
+/* ============================================================
+   STYLE HELPERS
+   ============================================================ */
+
+const inputStyle = {
+  width: "100%",
+  padding: "10px 14px",
+  borderRadius: 10,
+  border: "1px solid rgba(255,255,255,0.12)",
+  background: "rgba(255,255,255,0.03)",
+  color: "#fff",
+  fontSize: 14,
+  fontFamily: "'Inter', sans-serif",
+  outline: "none",
+};
+
+const stepBtnStyle = {
+  width: 26,
+  height: 26,
+  borderRadius: 8,
+  border: "1px solid rgba(255,255,255,0.15)",
+  background: "rgba(255,255,255,0.05)",
+  color: "#fff",
+  fontSize: 15,
+  lineHeight: 1,
+};
+
+const navBtnStyle = {
+  padding: "10px 22px",
+  borderRadius: 10,
+  border: "1px solid rgba(255,255,255,0.15)",
+  background: "transparent",
+  color: "#fff",
+  fontFamily: "'Rajdhani', sans-serif",
+  fontWeight: 700,
+  letterSpacing: "0.05em",
+};
+
+const sectionLabel = {
+  fontSize: 11,
+  color: "#756f8a",
+  letterSpacing: "0.1em",
+  marginBottom: 8,
+  fontFamily: "'Rajdhani', sans-serif",
+};
+
+const emptyStyle = { fontSize: 12, color: "#6b6480", fontStyle: "italic" };
+
+const refP = { fontSize: 12.5, color: "#cdc7de", lineHeight: 1.6, margin: 0 };
+
+const tableStyle = { borderCollapse: "collapse", width: "100%", fontSize: 12 };
+const thStyle = { textAlign: "left", padding: "6px 10px", color: "#9d96b5", fontWeight: 600, borderBottom: "1px solid rgba(255,255,255,0.1)", fontFamily: "'Rajdhani', sans-serif" };
+const tdStyle = { padding: "6px 10px", borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#e8e3f0" };
+
+function smallBtnStyle(accent) {
+  return {
+    padding: "6px 12px",
+    borderRadius: 8,
+    border: `1px solid ${accent.a}55`,
+    background: "transparent",
+    color: accent.a,
+    fontSize: 12,
+    fontFamily: "'Rajdhani', sans-serif",
+    fontWeight: 600,
+  };
+}
+
+function RefBlock({ title, accent, children }) {
+  return (
+    <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 16 }}>
+      <div style={{ fontFamily: "'Cinzel', serif", fontWeight: 700, fontSize: 14, color: accent.a, marginBottom: 10 }}>{title}</div>
+      {children}
+    </div>
+  );
+}
+
+function RefList({ items }) {
+  return (
+    <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: "#cdc7de", lineHeight: 1.7 }}>
+      {items.map((it, i) => <li key={i}>{it}</li>)}
+    </ul>
+  );
+}
+
+function MiniTable({ title, rows, accent }) {
+  return (
+    <div>
+      <div style={{ fontSize: 11, color: "#9d96b5", marginBottom: 6, letterSpacing: "0.05em" }}>{title}</div>
+      <table style={tableStyle}>
+        <tbody>
+          {rows.map(([a, b], i) => (
+            <tr key={i}>
+              <td style={{ ...tdStyle, color: "#9d96b5" }}>{a}</td>
+              <td style={{ ...tdStyle, color: accent.a, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>{b}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function MatchupCalculator({ myCore, oppCore, setOppCore, accent }) {
+  const dmg = damageMod(myCore.Strength, oppCore.Toughness);
+  const blk = blockMod(myCore.Strength, myCore.Toughness);
+  const acc = accuracyMod(myCore.Speed, oppCore.Initiative);
+  const dge = dodgeMod(myCore.Speed, myCore.Initiative);
+
+  const fmt = (v) => (v === null ? "X (special rule)" : v >= 0 ? `+${v}` : v);
+
+  return (
+    <div>
+      <div style={{ fontSize: 11, color: "#9d96b5", marginBottom: 8 }}>Opponent's Core Attributes:</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
+        {CORE_ATTRS.map((a) => (
+          <div key={a} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.03)", borderRadius: 8, padding: "6px 10px" }}>
+            <span style={{ fontSize: 12 }}>{a}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <button className="rc-btn" style={stepBtnStyle} onClick={() => setOppCore((p) => ({ ...p, [a]: clampNum((p[a] || 0) - 1, 0, 5) }))}>−</button>
+              <span style={{ width: 20, textAlign: "center", fontFamily: "'JetBrains Mono', monospace" }}>{oppCore[a] || 0}</span>
+              <button className="rc-btn" style={stepBtnStyle} onClick={() => setOppCore((p) => ({ ...p, [a]: clampNum((p[a] || 0) + 1, 0, 5) }))}>+</button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
+        {[
+          ["Damage", fmt(dmg)],
+          ["Block", fmt(blk)],
+          ["Accuracy", fmt(acc)],
+          ["Dodge", fmt(dge)],
+        ].map(([label, val]) => (
+          <div key={label} style={{ background: `${accent.a}12`, borderRadius: 8, padding: "8px 10px", textAlign: "center" }}>
+            <div style={{ fontSize: 10, color: "#9d96b5" }}>{label}</div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: accent.a }}>{val}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function h2style(accent) {
+  return {
+    fontFamily: "'Cinzel', serif",
+    fontSize: 20,
+    fontWeight: 700,
+    marginBottom: 16,
+    color: "#fff",
+    borderBottom: `1px solid ${accent.a}33`,
+    paddingBottom: 10,
+  };
+}
+
+function pillStyle(active, accent) {
+  return {
+    padding: "8px 16px",
+    borderRadius: 999,
+    border: `1px solid ${active ? accent.a : "rgba(255,255,255,0.12)"}`,
+    background: active ? `${accent.a}22` : "transparent",
+    color: "#fff",
+    fontFamily: "'Rajdhani', sans-serif",
+    fontWeight: 600,
+  };
+}
+
+function Field({ label, children }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ fontSize: 12, color: "#9d96b5", marginBottom: 6, fontFamily: "'Rajdhani', sans-serif", letterSpacing: "0.05em" }}>
+        {label.toUpperCase()}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+</script>
+
+<script>
+  (function () {
+    var source = document.getElementById('app-source').textContent;
+    var output = Babel.transform(source, {
+      presets: [['react', { runtime: 'classic' }]],
+    }).code;
+    var script = document.createElement('script');
+    script.text = output + '\nconst root = ReactDOM.createRoot(document.getElementById("root"));\nroot.render(React.createElement(CharacterCreator));';
+    document.body.appendChild(script);
+  })();
 </script>
 </body>
 </html>
